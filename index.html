@@ -55,7 +55,7 @@
         </div>
 
         <div class="row">
-            <div class="col-11">
+            <div class="col">
                 <div class="row">
                     <div class="col">
                         <a target="_blank" id="url_gist"></a>
@@ -67,7 +67,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col">
+            <div class="col-1">
                 <a href="https://github.com/gil9red/js__played_games_parser">Github</a>
             </div>
         </div>
@@ -89,14 +89,29 @@
                 <textarea readonly="readonly" id="result_json" cols="100" rows="10"></textarea>
             </div>
             <div class="tab-pane fade" id="nav-as_tree" role="tabpanel" aria-labelledby="nav-as_tree-tab">
-                <br/>
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="tree-search" placeholder="Type to search..." aria-describedby="basic-addon2">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-danger" type="button" onclick="$('#tree-search').val(''); search();">Clear</button>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="tree-search" placeholder="Type to search..." aria-describedby="basic-addon2">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-danger" type="button" onclick="$('#tree-search').val(''); search();">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div id="tree"></div>
+                        </div>
+                        <div class="col-2">
+                            <table class="table">
+                                <tr><td>Игр:</td><td id="stats_total_games"></td></tr>
+                                <tr><td>Платформ:</td><td id="stats_total_platforms"></td></tr>
+                            </table>
+                        </div>
                     </div>
                 </div>
-                <div id="tree"></div>
             </div>
             <div class="tab-pane fade" id="nav-as_tree_raw" role="tabpanel" aria-labelledby="nav-as_tree_raw-tab">
                 <textarea readonly="readonly" id="tree_raw" cols="100" rows="10"></textarea>
@@ -155,6 +170,22 @@
             }
         }
 
+        function updateStatistics(platforms) {
+            let total_games = 0;
+            let total_platforms = 0;
+
+            for (let [platform_name, categories] of platforms) {
+                total_platforms++;
+
+                for (let [category_name, games] of categories) {
+                    total_games += games.length;
+                }
+            }
+
+            $('#stats_total_games').text(total_games);
+            $('#stats_total_platforms').text(total_platforms);
+        }
+
         $(document).ready(function() {
             $('#tree-search').on('input', search);
 
@@ -210,7 +241,7 @@
             setProgress(1);
 
             $.get(url_gist, function(response) {
-                setProgress(50);
+                setProgress(25);
 
                 let match = response.match(new RegExp("/gil9red/2f80a34fb601cd685353/raw/.+/gistfile1.txt"));
                 if (match == null) {
@@ -222,7 +253,7 @@
                 $('#url_file_gist').attr('href', url_file_gist).text(url_file_gist);
 
                 $.get(url_file_gist, function(response) {
-                    setProgress(75);
+                    setProgress(50);
 
                     console.log("success");
                     // console.log(response);
@@ -233,6 +264,8 @@
                     $('#result_json').text(
                         stringifyMap(platforms)
                     );
+
+                    setProgress(75);
 
                     let tree_data = getJsonForTreeView(platforms);
                     $('#tree_raw').text(
@@ -256,6 +289,8 @@
                     search();
 
                     setProgress(100);
+
+                    updateStatistics(platforms);
 
                 }).fail(process_error);
 
