@@ -249,29 +249,28 @@
                     return;
                 }
                 let url_file_gist = new URL(match[0], url_gist).href;
-                console.log(url_file_gist);
+                console.log("Found url " + url_file_gist);
+                localStorage.cache_url_file_gist = url_file_gist;
                 $('#url_file_gist').attr('href', url_file_gist).text(url_file_gist);
 
                 $.get(url_file_gist, function(response) {
                     setProgress(50);
 
-                    console.log("success");
+                    console.log("Success load content from " + url_file_gist);
                     // console.log(response);
-
+                    localStorage.cache_text_file_gist = response;
                     $('#result_raw').text(response);
 
                     let platforms = parse_played_games(response);
-                    $('#result_json').text(
-                        stringifyMap(platforms)
-                    );
-
+                    let result_json = stringifyMap(platforms);
+                    localStorage.cache_result_json = result_json;
+                    $('#result_json').text(result_json);
                     setProgress(75);
 
                     let tree_data = getJsonForTreeView(platforms);
-                    $('#tree_raw').text(
-                        JSON.stringify(tree_data, null, 4)
-                    );
-
+                    let tree_raw = JSON.stringify(tree_data, null, 4);
+                    localStorage.cache_tree_raw = tree_raw;
+                    $('#tree_raw').text(tree_raw);
                     setProgress(90);
 
                     $('#tree').treeview({
