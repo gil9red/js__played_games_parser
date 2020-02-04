@@ -90,6 +90,14 @@
                 </button>
             </div>
         </div>
+        <div class="row">
+            <div class="col">
+                <div id="msg_error" class="alert alert-danger alert-dismissible m-2" style="display: none">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>Error!</strong> <div id="msg_error_text"></div>
+                </div>
+            </div>
+        </div>
         <br>
 
         <nav>
@@ -157,10 +165,15 @@
             }
         });
 
+        function show_error(text) {
+            $('#msg_error').show();
+            $('#msg_error_text').text(text);
+        }
+
         function process_error(jqXHR, textStatus, errorThrown) {
             console.log("error: " + jqXHR + ", " + textStatus + ", " + errorThrown);
             $('#result_raw').text("<error>");
-            alert("error: " + jqXHR + ", " + textStatus + ", " + errorThrown);
+            show_error(jqXHR + ", " + textStatus + ", " + errorThrown);
 
             setProgress(0);
         }
@@ -187,7 +200,7 @@
 
                 let url_file_gist = get_url_file_gist_from_response(response);
                 if (url_file_gist == null) {
-                    alert("No match url_file_gist!");
+                    show_error("No match url_file_gist!");
                     return;
                 }
 
