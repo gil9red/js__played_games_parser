@@ -247,7 +247,8 @@
                     var timeDiff = endTime - this.__startTime; // ms
                     console.log(`Elapsed time building: ${timeDiff} ms`);
 
-                    //search();
+                    // NOTE: Fix error "Not initialized, can not call method : search"
+                    setTimeout(search, 50);
                 },
                 onSearchComplete: function(event, results) {
                     $("#tree .node-tree.game").each(function(index) {
@@ -309,6 +310,11 @@
             console.log('Call search');
 
             let text = $('#tree-search').val();
+            if (text.length == 0) {
+                $('#tree').treeview('clearSearch');
+                return;
+            }
+
             $('#tree').treeview('search', [ text, {
                 ignoreCase: true,    // Case insensitive
                 exactMatch: false,   // Like or equals
