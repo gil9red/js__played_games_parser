@@ -8,7 +8,7 @@
     <link rel="stylesheet" type="text/css" href="static/bootstrap-treeview-2.0.0/bootstrap-treeview.css">
     <link rel="stylesheet" type="text/css" href="static/glyphicon/glyphicon.css">
 
-    <script type="text/javascript" src="static/js/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="static/js/jquery-2.1.4.js"></script>
     <script type="text/javascript" src="static/bootstrap-4.3.1/bootstrap.js"></script>
     <script type="text/javascript" src="static/bootstrap-treeview-2.0.0/bootstrap-treeview.js"></script>
     <script type="text/javascript" src="static/js/parser.js"></script>
@@ -239,16 +239,22 @@
                 // Events
                 onNodeSelected: processClickNode,
                 onNodeUnselected: processClickNode,
-                onLoading: function (event) {
+                onLoading: function(event) {
                     this.__startTime = new Date();
                 },
-                onRendered: function (event, nodes) {
+                onRendered: function(event, nodes) {
                     let endTime = new Date();
                     var timeDiff = endTime - this.__startTime; // ms
                     console.log(`Elapsed time building: ${timeDiff} ms`);
 
-                    search();
-                }
+                    //search();
+                },
+                onSearchComplete: function(event, results) {
+                    $("#tree .node-tree.game").each(function(index) {
+                        let node = $(this);
+                        node.toggle(node.hasClass("node-result"));
+                    });
+                },
             });
 
             setProgress(100);
@@ -302,13 +308,12 @@
         function search(e) {
             console.log('Call search');
 
-            var pattern = $('#tree-search').val().toLowerCase();
-            $("#tree .node-tree.game").each(function(index) {
-                let node = $(this);
-                node.toggle(
-                    node.text().toLowerCase().includes(pattern)
-                );
-            });
+            let text = $('#tree-search').val();
+            $('#tree').treeview('search', [ text, {
+                ignoreCase: true,    // Case insensitive
+                exactMatch: false,   // Like or equals
+                revealResults: true, // Reveal matching nodes
+            }]);
         }
 
         function processClickNode(event, node) {
