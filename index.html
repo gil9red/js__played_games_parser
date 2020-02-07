@@ -5,12 +5,12 @@
     <title>js__mini_played_games_parser</title>
 
     <link rel="stylesheet" type="text/css" href="static/bootstrap-4.3.1/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="static/bootstrap-treeview-1.2.0/bootstrap-treeview.css">
+    <link rel="stylesheet" type="text/css" href="static/bootstrap-treeview-2.0.0/bootstrap-treeview.css">
     <link rel="stylesheet" type="text/css" href="static/glyphicon/glyphicon.css">
 
     <script type="text/javascript" src="static/js/jquery-3.1.1.min.js"></script>
     <script type="text/javascript" src="static/bootstrap-4.3.1/bootstrap.js"></script>
-    <script type="text/javascript" src="static/bootstrap-treeview-1.2.0/bootstrap-treeview.js"></script>
+    <script type="text/javascript" src="static/bootstrap-treeview-2.0.0/bootstrap-treeview.js"></script>
     <script type="text/javascript" src="static/js/parser.js"></script>
 
     <style>
@@ -235,11 +235,21 @@
                 levels: 3,
                 multiSelect: true,
                 highlightSelected: false,
+
+                // Events
                 onNodeSelected: processClickNode,
                 onNodeUnselected: processClickNode,
-            });
+                onLoading: function (event) {
+                    this.__startTime = new Date();
+                },
+                onRendered: function (event, nodes) {
+                    let endTime = new Date();
+                    var timeDiff = endTime - this.__startTime; // ms
+                    console.log(`Elapsed time building: ${timeDiff} ms`);
 
-            search();
+                    search();
+                }
+            });
 
             setProgress(100);
 
@@ -290,6 +300,8 @@
         }
 
         function search(e) {
+            console.log('Call search');
+
             var pattern = $('#tree-search').val().toLowerCase();
             $("#tree .node-tree.game").each(function(index) {
                 let node = $(this);

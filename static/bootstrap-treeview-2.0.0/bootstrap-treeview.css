@@ -1,5 +1,5 @@
 /* =========================================================
- * bootstrap-treeview.css v1.2.0
+ * bootstrap-treeview.css v2.0.0
  * =========================================================
  * Copyright 2013 Jonathan Miles
  * Project URL : http://www.jondmiles.com/bootstrap-treeview
@@ -34,4 +34,8 @@
 .treeview .node-disabled {
 	color: silver;
 	cursor: not-allowed;
+}
+
+.treeview .node-hidden {
+	display: none;
 }
