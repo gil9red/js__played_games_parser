@@ -73,11 +73,6 @@
                         <a target="_blank" id="url_gist"></a>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col">
-                        <a target="_blank" id="url_file_gist"></a>
-                    </div>
-                </div>
             </div>
             <div class="col-1">
                 <a href="https://github.com/gil9red/js__played_games_parser">Github</a>
@@ -147,15 +142,6 @@
     </div>
 
     <script>
-        $.ajaxSetup({
-            beforeSend: function(request) {
-                // Mobile version not working, switching on Desktop-version
-                request.setRequestHeader(
-                    "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0"
-                );
-            }
-        });
-
         // Для обхода: "Запрос из постороннего источника заблокирован: Политика одного источника запрещает чтение удаленного ресурса"
         $.ajaxPrefilter( function (options) {
             if (options.crossDomain && jQuery.support.cors) {
@@ -178,16 +164,21 @@
             setProgress(0);
         }
 
-        function get_url_file_gist_from_response(response) {
-            let match = response.match(new RegExp("/gil9red/2f80a34fb601cd685353/raw/.+/gistfile1.txt"));
-            if (match == null) {
+        function parse_gist_file(html) {
+            let lines = [];
+
+            $(html).find('.js-file-line').each(function( index ) {
+                lines.push(
+                    $(this).text().replace(/\u00a0/g, ' ')
+                );
+            });
+
+            if (lines.length == 0) {
+                show_error("No parse url_gist!");
                 return null;
             }
 
-            let url_file_gist = new URL(match[0], url_gist).href;
-            console.log("Found url " + url_file_gist);
-
-            return url_file_gist;
+            return lines.join('\n');
         }
 
         function refresh_parse() {
@@ -198,20 +189,11 @@
             $.get(url_gist, function(response) {
                 setProgress(25);
 
-                let url_file_gist = get_url_file_gist_from_response(response);
-                if (url_file_gist == null) {
-                    show_error("No match url_file_gist!");
-                    return;
+                let text = parse_gist_file(response);
+                if (text != null) {
+                    console.log("Success parse gist content from " + url_gist);
+                    process_text_file_gist(text);
                 }
-
-                $('#url_file_gist').attr('href', url_file_gist).text(url_file_gist);
-                localStorage.cache_url_file_gist = url_file_gist;
-
-                $.get(url_file_gist, function(response) {
-                    console.log("Success load content from " + url_file_gist);
-                    process_text_file_gist(response);
-
-                }).fail(process_error);
 
             }).fail(process_error);
         }
@@ -220,23 +202,22 @@
             console.log("Check actuality of cache");
 
             // Если кэша нет
-            if (localStorage.cache_url_file_gist == null) {
+            if (localStorage.cache_text_file_gist == null) {
                 $('#notify_need_refresh').show();
                 return;
             }
 
             $.get(url_gist, function(response) {
-                let url_file_gist = get_url_file_gist_from_response(response);
+                let is_actual_cache = parse_gist_file(response) == localStorage.cache_text_file_gist;
 
-                // Если кэш не актуален
-                if (localStorage.cache_url_file_gist != url_file_gist) {
-                    console.log("Cache is not actual!");
-
-                    $('#notify_need_refresh').show();
-
-                } else {
+                // Если кэш актуален
+                if (is_actual_cache) {
                     console.log("Cache is actual!");
                     $('#notify_need_refresh').hide();
+
+                } else {
+                    console.log("Cache is not actual!");
+                    $('#notify_need_refresh').show();
                 }
             });
         }
@@ -384,9 +365,8 @@
 
         $(document).ready(function() {
             // Попробуем при загрузке страницы вытащить данные из кэша
-            if (localStorage.cache_url_file_gist != null) {
+            if (localStorage.cache_text_file_gist != null) {
                 console.log("Build from cache");
-                $('#url_file_gist').attr('href', localStorage.cache_url_file_gist).text(localStorage.cache_url_file_gist);
 
                 update_tabs(
                     localStorage.cache_text_file_gist,
