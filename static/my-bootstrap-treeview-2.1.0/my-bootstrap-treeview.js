@@ -1,9 +1,10 @@
 /* =========================================================
- * bootstrap-treeview.js v2.0.0
+ * patternfly-bootstrap-treeview.js v2.1.0
  * =========================================================
  * Copyright 2013 Jonathan Miles
  * Copyright 2020 Ilya Petrash (aka gil9red)
- *     * Added: node.class
+ *     SOURCE: https://github.com/patternfly/patternfly-bootstrap-treeview/blob/6893ede419dbfcdc2c333a1c30098c605f980f64/src/js/bootstrap-treeview.js
+ *
  * Project URL : http://www.jondmiles.com/bootstrap-treeview
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,15 +38,19 @@
 
 		expandIcon: 'glyphicon glyphicon-plus',
 		collapseIcon: 'glyphicon glyphicon-minus',
+		loadingIcon: 'glyphicon glyphicon-hourglass',
 		emptyIcon: 'glyphicon',
 		nodeIcon: '',
 		selectedIcon: '',
 		checkedIcon: 'glyphicon glyphicon-check',
+		partiallyCheckedIcon: 'glyphicon glyphicon-expand',
 		uncheckedIcon: 'glyphicon glyphicon-unchecked',
+		tagsClass: 'badge',
 
 		color: undefined,
 		backColor: undefined,
 		borderColor: undefined,
+		changedNodeColor: '#39A5DC',
 		onhoverColor: '#F5F5F5',
 		selectedColor: '#FFFFFF',
 		selectedBackColor: '#428bca',
@@ -56,10 +61,17 @@
 		highlightSearchResults: true,
 		showBorder: true,
 		showIcon: true,
+		showImage: false,
 		showCheckbox: false,
+		checkboxFirst: false,
+		highlightChanges: false,
 		showTags: false,
 		multiSelect: false,
 		preventUnselect: false,
+		allowReselect: false,
+		hierarchicalCheck: false,
+		propagateCheckEvent: false,
+		wrapNodeText: false,
 
 		// Event handlers
 		onLoading: undefined,
@@ -74,6 +86,7 @@
 		onNodeDisabled: undefined,
 		onNodeEnabled: undefined,
 		onNodeExpanded: undefined,
+		onNodeChanged: undefined,
 		onNodeSelected: undefined,
 		onNodeUnchecked: undefined,
 		onNodeUnselected: undefined,
@@ -90,7 +103,9 @@
 	_default.searchOptions = {
 		ignoreCase: true,
 		exactMatch: false,
-		revealResults: true
+		plainText: true,
+		revealResults: true,
+		onMatched: undefined,
 	};
 
 	_default.dataUrl = {
@@ -116,6 +131,7 @@
 			remove: $.proxy(this._remove, this),
 
 			// Query methods
+			getNode: $.proxy(this.getNode, this),
 			findNodes: $.proxy(this.findNodes, this),
 			getNodes: $.proxy(this.getNodes, this), // todo document + test
 			getParents: $.proxy(this.getParents, this),
@@ -135,6 +151,7 @@
 			addNodeBefore: $.proxy(this.addNodeBefore, this),
 			removeNode: $.proxy(this.removeNode, this),
 			updateNode: $.proxy(this.updateNode, this),
+			setVisible: $.proxy(this._setVisible, this),
 
 			// Select methods
 			selectNode: $.proxy(this.selectNode, this),
@@ -155,6 +172,7 @@
 			uncheckAll: $.proxy(this.uncheckAll, this),
 			uncheckNode: $.proxy(this.uncheckNode, this),
 			toggleNodeChecked: $.proxy(this.toggleNodeChecked, this),
+			unmarkCheckboxChanges: $.proxy(this.unmarkCheckboxChanges, this),
 
 			// Disable / enable methods
 			disableAll: $.proxy(this.disableAll, this),
@@ -175,6 +193,9 @@
 
 		this._options = $.extend({}, _default.settings, options);
 
+		// Cache empty icon DOM template
+		this._template.icon.empty.addClass(this._options.emptyIcon);
+
 		this._destroy();
 		this._subscribeEvents();
 
@@ -193,7 +214,7 @@
 			}, this))
 			.then($.proxy(function () {
 				// render to DOM
-				this._render();
+				this._render(this._options);
 			}, this));
 	};
 
@@ -219,7 +240,7 @@
 
 	Tree.prototype._loadLocalData = function (options, done) {
 		done.resolve((typeof options.data === 'string') ?
-								$.parseJSON(options.data) :
+								JSON.parse(options.data) :
 								$.extend(true, [], options.data));
 	};
 
@@ -256,6 +277,7 @@
 		this.$element.off('nodeDisabled');
 		this.$element.off('nodeEnabled');
 		this.$element.off('nodeExpanded');
+		this.$element.off('nodeChanged');
 		this.$element.off('nodeSelected');
 		this.$element.off('nodeUnchecked');
 		this.$element.off('nodeUnselected');
@@ -312,6 +334,10 @@
 			this.$element.on('nodeExpanded', this._options.onNodeExpanded);
 		}
 
+		if (typeof (this._options.onNodeChanged) === 'function') {
+			this.$element.on('nodeChanged', this._options.onNodeChanged);
+		}
+
 		if (typeof (this._options.onNodeSelected) === 'function') {
 			this.$element.on('nodeSelected', this._options.onNodeSelected);
 		}
@@ -350,6 +376,7 @@
 		return $.when.apply(this, this._setInitialState(node, level))
 			.done($.proxy(function () {
 				this._orderedNodes = this._sortNodes();
+				this._inheritCheckboxChanges();
 				this._triggerEvent('initialized', this._orderedNodes, _default.options);
 				return;
 			}, this));
@@ -384,12 +411,22 @@
 				node.selectable = true;
 			}
 
+			// if not provided set checkable default value
+			if (!node.hasOwnProperty('checkable')) {
+				node.checkable = true;
+			}
+
 			// where provided we should preserve states
 			node.state = node.state || {};
 
 			// set checked state; unless set always false
 			if (!node.state.hasOwnProperty('checked')) {
 				node.state.checked = false;
+			}
+
+			// convert the undefined string if hierarchical checks are enabled
+			if (this._options.hierarchicalCheck && node.state.checked === 'undefined') {
+				node.state.checked = undefined;
 			}
 
 			// set enabled state; unless set always false
@@ -415,11 +452,11 @@
 			}
 
 			// set visible state; based parent state plus levels
-			if ((parent && parent.state && parent.state.expanded) ||
-					(level <= this._options.levels)) {
+			if ((parent && parent.state && parent.state.expanded)
+			    || (level <= this._options.levels)
+			) {
 				node.state.visible = true;
-			}
-			else {
+			} else {
 				node.state.visible = false;
 			}
 
@@ -444,7 +481,20 @@
 	};
 
 	Tree.prototype._sortNodes = function () {
-		return $.map(Object.keys(this._nodes).sort(), $.proxy(function (value, index) {
+		return $.map(Object.keys(this._nodes).sort(function (a, b) {
+			if (a === b) return 0;
+			var a = a.split('.').map(function (level) { return parseInt(level); });
+			var b = b.split('.').map(function (level) { return parseInt(level); });
+
+			var c = Math.max(a.length, b.length);
+			for (var i=0; i<c; i++) {
+				if (a[i] === undefined) return -1;
+				if (b[i] === undefined) return +1;
+				if (a[i] - b[i] > 0) return +1;
+				if (a[i] - b[i] < 0) return -1;
+			};
+
+		}), $.proxy(function (value, index) {
 		  return this._nodes[value];
 		}, this));
 	};
@@ -460,7 +510,9 @@
 			this._toggleExpanded(node, $.extend({}, _default.options));
 		}
 		else if ((classList.indexOf('check-icon') !== -1)) {
-			this._toggleChecked(node, $.extend({}, _default.options));
+			if (node.checkable) {
+				this._toggleChecked(node, $.extend({}, _default.options));
+			}
 		}
 		else {
 			if (node.selectable) {
@@ -484,17 +536,37 @@
 
 	Tree.prototype._toggleExpanded = function (node, options) {
 		if (!node) return;
-		this._setExpanded(node, !node.state.expanded, options);
+
+		// Lazy-load the child nodes if possible
+		if (typeof(this._options.lazyLoad) === 'function' && node.lazyLoad) {
+			this._lazyLoad(node);
+		} else {
+			this._setExpanded(node, !node.state.expanded, options);
+		}
+	};
+
+	Tree.prototype._lazyLoad = function (node) {
+		// Show a different icon while loading the child nodes
+		node.$el.children('span.expand-icon')
+			.removeClass(this._options.expandIcon)
+			.addClass(this._options.loadingIcon);
+
+		var _this = this;
+		this._options.lazyLoad(node, function (nodes) {
+			// Adding the node will expand its parent automatically
+			_this.addNode(nodes, node);
+		});
+		// Only the first expand should do a lazy-load
+		delete node.lazyLoad;
 	};
 
 	Tree.prototype._setExpanded = function (node, state, options) {
-
 		// We never pass options when rendering, so the only time
 		// we need to validate state is from user interaction
-		if (options && state === node.state.expanded) return;
+		if (options && state === node.state.expanded)
+		    return;
 
 		if (state && node.nodes) {
-
 			// Set node state
 			node.state.expanded = true;
 
@@ -502,21 +574,37 @@
 			if (node.$el) {
 				node.$el.children('span.expand-icon')
 					.removeClass(this._options.expandIcon)
+					.removeClass(this._options.loadingIcon)
 					.addClass(this._options.collapseIcon);
 			}
 
 			// Expand children
 			if (node.nodes && options) {
 				$.each(node.nodes, $.proxy(function (index, node) {
-					this._setVisible(node, true, options);
+                    this._setVisible(node, true, options);
+
+				    this._setDeepVisible(node, true, options, $.proxy(function(node, state, options) {
+                        let parent = this.getNode(node.parentId)
+
+                        // If parent expanded and visible
+                        let visibleParent = parent.state.expanded && parent.state.visible;
+
+                        // TODO: dirty hack for js__played_games_parser
+			            if (node.level == 3 && this._hasSearchPattern && visibleParent) {
+				            return node.searchResult;
+				        }
+
+				        return visibleParent && state;
+
+				    }, this));
+
 				}, this));
 			}
 
 			// Optionally trigger event
 			this._triggerEvent('nodeExpanded', node, options);
-		}
-		else if (!state) {
 
+		} else if (!state) {
 			// Set node state
 			node.state.expanded = false;
 
@@ -530,8 +618,10 @@
 			// Collapse children
 			if (node.nodes && options) {
 				$.each(node.nodes, $.proxy(function (index, node) {
-					this._setVisible(node, false, options);
-					this._setExpanded(node, false, options);
+				    this._setDeepVisible(node, false, options);
+				    // TODO: remove old code
+					//this._setVisible(node, false, options);
+					//this._setExpanded(node, false, options);
 				}, this));
 			}
 
@@ -541,11 +631,9 @@
 	};
 
 	Tree.prototype._setVisible = function (node, state, options) {
-
 		if (options && state === node.state.visible) return;
 
 		if (state) {
-
 			// Set node state
 			node.state.visible = true;
 
@@ -553,9 +641,7 @@
 			if (node.$el) {
 				node.$el.removeClass('node-hidden');
 			}
-		}
-		else {
-
+		} else {
 			// Set node state to unchecked
 			node.state.visible = false;
 
@@ -566,13 +652,31 @@
 		}
 	};
 
+	Tree.prototype._setDeepVisible = function (node, state, options, stateFunction) {
+	    if (stateFunction != undefined) {
+	        state = stateFunction(node, state, options);
+	    }
+        this._setVisible(node, state, options);
+
+        // Expand children
+        if (node.nodes && options) {
+            $.each(node.nodes, $.proxy(function (index, node) {
+                if (stateFunction != undefined) {
+                    state = stateFunction(node, state, options);
+                }
+                this._setVisible(node, state, options);
+
+            }, this));
+        }
+	};
+
 	Tree.prototype._toggleSelected = function (node, options) {
 		if (!node) return;
 		this._setSelected(node, !node.state.selected, options);
 		return this;
 	};
 
-	Tree.prototype._setSelected = function (node, state, options) {
+	Tree.prototype._setSelected = function (node, state, options, fired) {
 
 		// We never pass options when rendering, so the only time
 		// we need to validate state is from user interaction
@@ -583,7 +687,7 @@
 			// If multiSelect false, unselect previously selected
 			if (!this._options.multiSelect) {
 				$.each(this._findNodes('true', 'state.selected'), $.proxy(function (index, node) {
-					this._setSelected(node, false, $.extend(options, {unselecting: true}));
+					this._setSelected(node, false, $.extend(options, {unselecting: true}), true);
 				}, this));
 			}
 
@@ -603,6 +707,7 @@
 
 			// Optionally trigger event
 			this._triggerEvent('nodeSelected', node, options);
+			this._triggerEvent('nodeChanged', node, options);
 		}
 		else {
 
@@ -610,6 +715,11 @@
 			if (this._options.preventUnselect &&
 					(options && !options.unselecting) &&
 					(this._findNodes('true', 'state.selected').length === 1)) {
+				// Fire the nodeSelected event if reselection is allowed
+				if (this._options.allowReselect) {
+					this._triggerEvent('nodeSelected', node, options);
+					this._triggerEvent('nodeChanged', node, options);
+				}
 				return this;
 			}
 
@@ -629,13 +739,65 @@
 
 			// Optionally trigger event
 			this._triggerEvent('nodeUnselected', node, options);
+			if (!fired) {
+				this._triggerEvent('nodeChanged', node, options);
+			}
 		}
 
 		return this;
 	};
 
+	Tree.prototype._inheritCheckboxChanges = function () {
+		if (this._options.showCheckbox && this._options.highlightChanges) {
+			this._checkedNodes = $.grep(this._orderedNodes, function (node) {
+				return node.state.checked;
+			});
+		}
+	};
+
 	Tree.prototype._toggleChecked = function (node, options) {
 		if (!node) return;
+
+		if (this._options.hierarchicalCheck) {
+			// Event propagation to the parent/child nodes
+			var childOptions = $.extend({}, options, {silent: options.silent || !this._options.propagateCheckEvent});
+
+			var state, currentNode = node;
+			// Temporarily swap the tree state
+			node.state.checked = !node.state.checked;
+
+			// Iterate through each parent node
+			while (currentNode = this._nodes[currentNode.parentId]) {
+
+				// Calculate the state
+				state = currentNode.nodes.reduce(function (acc, curr) {
+					return (acc === curr.state.checked) ? acc : undefined;
+				}, currentNode.nodes[0].state.checked);
+
+				// Set the state
+				this._setChecked(currentNode, state, childOptions);
+			}
+
+			if (node.nodes && node.nodes.length > 0) {
+				// Copy the content of the array
+				var child, children = node.nodes.slice();
+				// Iterate through each child node
+				while (children && children.length > 0) {
+					child = children.pop();
+
+					// Set the state
+					this._setChecked(child, node.state.checked, childOptions);
+
+					// Append children to the end of the list
+					if (child.nodes && child.nodes.length > 0) {
+						children = children.concat(child.nodes.slice());
+					}
+				}
+			}
+			// Swap back the tree state
+			node.state.checked = !node.state.checked;
+		}
+
 		this._setChecked(node, !node.state.checked, options);
 	};
 
@@ -645,6 +807,11 @@
 		// we need to validate state is from user interaction
 		if (options && state === node.state.checked) return;
 
+		// Highlight the node if its checkbox has unsaved changes
+		if (this._options.highlightChanges) {
+			node.$el.toggleClass('node-check-changed', (this._checkedNodes.indexOf(node) == -1) == state);
+		}
+
 		if (state) {
 
 			// Set node state
@@ -652,25 +819,43 @@
 
 			// Set element
 			if (node.$el) {
-				node.$el.addClass('node-checked');
+				node.$el.addClass('node-checked').removeClass('node-checked-partial');
 				node.$el.children('span.check-icon')
 					.removeClass(this._options.uncheckedIcon)
+					.removeClass(this._options.partiallyCheckedIcon)
 					.addClass(this._options.checkedIcon);
 			}
 
 			// Optionally trigger event
 			this._triggerEvent('nodeChecked', node, options);
 		}
-		else {
+		else if (state === undefined && this._options.hierarchicalCheck) {
+
+			// Set node state to partially checked
+			node.state.checked = undefined;
+
+			// Set element
+			if (node.$el) {
+				node.$el.addClass('node-checked-partial').removeClass('node-checked');
+				node.$el.children('span.check-icon')
+					.removeClass(this._options.uncheckedIcon)
+					.removeClass(this._options.checkedIcon)
+					.addClass(this._options.partiallyCheckedIcon);
+			}
+
+			// Optionally trigger event, partially checked is technically unchecked
+			this._triggerEvent('nodeUnchecked', node, options);
+		} else {
 
 			// Set node state to unchecked
 			node.state.checked = false;
 
 			// Set element
 			if (node.$el) {
-				node.$el.removeClass('node-checked');
+				node.$el.removeClass('node-checked node-checked-partial');
 				node.$el.children('span.check-icon')
 					.removeClass(this._options.checkedIcon)
+					.removeClass(this._options.partiallyCheckedIcon)
 					.addClass(this._options.uncheckedIcon);
 			}
 
@@ -691,9 +876,11 @@
 			node.state.disabled = true;
 
 			// Disable all other states
-			this._setSelected(node, false, options);
-			this._setChecked(node, false, options);
-			this._setExpanded(node, false, options);
+			if (options && !options.keepState) {
+				this._setSelected(node, false, options);
+				this._setChecked(node, false, options);
+				this._setExpanded(node, false, options);
+			}
 
 			// Set element
 			if (node.$el) {
@@ -739,11 +926,13 @@
 		}
 	};
 
-	Tree.prototype._render = function () {
+	Tree.prototype._render = function (options) {
+	    options = $.extend({}, _default.options, options);
+
 		if (!this._initialized) {
 
 			// Setup first time only components
-			this.$wrapper = $(this._template.tree);
+			this.$wrapper = this._template.tree.clone();
 			this.$element.empty()
 				.addClass(pluginName)
 				.append(this.$wrapper);
@@ -759,7 +948,7 @@
 			previousNode = node;
 		}, this));
 
-		this._triggerEvent('rendered', this._orderedNodes, _default.options);
+		this._triggerEvent('rendered', this._orderedNodes, options);
 	};
 
 	Tree.prototype._renderNode = function (node, previousNode) {
@@ -767,53 +956,80 @@
 
 		if (!node.$el) {
 			node.$el = this._newNodeEl(node, previousNode)
-				.addClass('node-' + this._elementId)
-				.addClass(node.class);
+				.addClass('node-' + this._elementId);
 		}
 		else {
 			node.$el.empty();
 		}
 
+		// Append .classes to the node
+		node.$el.addClass(node.class);
+
+		// Set the #id of the node if specified
+		if (node.id) {
+			node.$el.attr('id', node.id);
+		}
+
+		// Append custom data- attributes to the node
+		if (node.dataAttr) {
+			$.each(node.dataAttr, function (key, value) {
+				node.$el.attr('data-' + key, value);
+			});
+		}
+
 		// Set / update nodeid; it can change as a result of addNode etc.
 		node.$el.attr('data-nodeId', node.nodeId);
 
+		// Set the tooltip attribute if present
+		if (node.tooltip) {
+			node.$el.attr('title', node.tooltip);
+		}
+
 		// Add indent/spacer to mimic tree structure
 		for (var i = 0; i < (node.level - 1); i++) {
-			node.$el.append(this._template.indent);
+			node.$el.append(this._template.indent.clone());
 		}
 
 		// Add expand / collapse or empty spacer icons
 		node.$el
-			.append($(this._template.icon)
-				.addClass(node.nodes ? 'expand-icon' : this._options.emptyIcon)
+			.append(
+				node.nodes || node.lazyLoad ? this._template.icon.expand.clone() : this._template.icon.empty.clone()
 			);
 
-		// Add node icon
-		if (this._options.showIcon) {
-			node.$el
-				.append($(this._template.icon)
-					.addClass('node-icon')
-					.addClass(node.icon || this._options.nodeIcon)
-				);
-		}
-
-		// Add checkable icon
-		if (this._options.showCheckbox) {
-			node.$el
-				.append($(this._template.icon)
-					.addClass('check-icon')
-				);
+		// Add checkbox and node icons
+		if (this._options.checkboxFirst) {
+			this._addCheckbox(node);
+			this._addIcon(node);
+			this._addImage(node);
+		} else {
+			this._addIcon(node);
+			this._addImage(node);
+			this._addCheckbox(node);
 		}
 
 		// Add text
-		node.$el.append(node.text);
+		if (this._options.wrapNodeText) {
+			var wrapper = this._template.text.clone();
+			node.$el.append(wrapper);
+			wrapper.append(node.text);
+		} else {
+			node.$el.append(node.text);
+		}
 
 		// Add tags as badges
 		if (this._options.showTags && node.tags) {
 			$.each(node.tags, $.proxy(function addTag(id, tag) {
 				node.$el
-					.append($(this._template.badge)
-						.append(tag)
+					.append(this._template.badge.clone()
+						.addClass(
+							(typeof tag === 'object' ? tag.class : undefined)
+							|| node.tagsClass
+							|| this._options.tagsClass
+						)
+						.append(
+							(typeof tag === 'object' ? tag.text : undefined)
+							|| tag
+						)
 					);
 			}, this));
 		}
@@ -830,17 +1046,49 @@
 		this._triggerEvent('nodeRendered', node, _default.options);
 	};
 
+	// Add checkable icon
+	Tree.prototype._addCheckbox = function (node) {
+		if (this._options.showCheckbox && (node.hideCheckbox === undefined || node.hideCheckbox === false)) {
+			node.$el
+				.append(this._template.icon.check.clone());
+		}
+	}
+
+	// Add node icon
+	Tree.prototype._addIcon = function (node) {
+		if (this._options.showIcon && !(this._options.showImage && node.image)) {
+			var icon = this._template.icon.node.clone().addClass(node.icon || this._options.nodeIcon);
+			if (node.iconColor) {
+				icon.css('color', node.iconColor);
+			}
+			if (node.iconBackground) {
+				icon.addClass('node-icon-background');
+				icon.css('background', node.iconBackground);
+			}
+
+			node.$el.append(icon);
+		}
+	}
+
+	Tree.prototype._addImage = function (node) {
+ 		if (this._options.showImage && node.image) {
+ 			node.$el
+ 				.append(this._template.image.clone()
+ 					.addClass('node-image')
+ 					.css('background-image', "url('" + node.image + "')")
+ 				);
+ 		}
+ 	}
+
 	// Creates a new node element from template and
 	// ensures the template is inserted at the correct position
 	Tree.prototype._newNodeEl = function (node, previousNode) {
-		var $el = $(this._template.node);
+		var $el = this._template.node.clone();
 
 		if (previousNode) {
 			// typical usage, as nodes are rendered in
 			// sort order we add after the previous element
-			this.$wrapper.children()
-				.eq(previousNode.$el.index())
-				.after($el);
+			previousNode.$el.after($el);
 		} else {
 			// we use prepend instead of append,
 			// to cater for root inserts i.e. nodeId 0.0
@@ -936,6 +1184,12 @@
 			style += '.node-' + this._elementId + '.node-selected:hover{' + innerStyle + '}';
 		}
 
+		// Style changed nodes
+		if (this._options.highlightChanges) {
+			var innerStyle = 'color: ' + this._options.changedNodeColor + ';';
+			style += '.node-' + this._elementId + '.node-check-changed{' + innerStyle + '}';
+		}
+
 		// Node level style overrides
 		$.each(this._orderedNodes, $.proxy(function (index, node) {
 			if (node.color || node.backColor) {
@@ -954,14 +1208,31 @@
 	};
 
 	Tree.prototype._template = {
-		tree: '<ul class="list-group"></ul>',
-		node: '<li class="list-group-item"></li>',
-		indent: '<span class="indent"></span>',
-		icon: '<span class="icon"></span>',
-		badge: '<span class="badge"></span>'
+		tree: $('<ul class="list-group"></ul>'),
+		node: $('<li class="list-group-item"></li>'),
+		indent: $('<span class="indent"></span>'),
+		icon: {
+			node: $('<span class="icon node-icon"></span>'),
+			expand: $('<span class="icon expand-icon"></span>'),
+			check: $('<span class="icon check-icon"></span>'),
+			empty: $('<span class="icon"></span>')
+		},
+		image: $('<span class="image"></span>'),
+		badge: $('<span></span>'),
+		text: $('<span class="text"></span>')
 	};
 
 	Tree.prototype._css = '.treeview .list-group-item{cursor:pointer}.treeview span.indent{margin-left:10px;margin-right:10px}.treeview span.icon{width:12px;margin-right:5px}.treeview .node-disabled{color:silver;cursor:not-allowed}'
+
+
+	/**
+		Returns a single node object that matches the given node id.
+		@param {Number} nodeId - A node's unique identifier
+		@return {Object} node - Matching node
+	*/
+	Tree.prototype.getNode = function (nodeId) {
+		return this._nodes[nodeId];
+	};
 
 
 	/**
@@ -969,8 +1240,8 @@
 		@param {String} pattern - A pattern to match against a given field
 		@return {String} field - Field to query pattern against
 	*/
-	Tree.prototype.findNodes = function (pattern, field) {
-		return this._findNodes(pattern, field);
+	Tree.prototype.findNodes = function (pattern, field, modifier) {
+		return this._findNodes(pattern, field, modifier);
 	};
 
 
@@ -1132,7 +1403,7 @@
 				if (parentNode && !parentNode.state.expanded) {
 					this._setExpanded(parentNode, true, options);
 				}
-				this._render();
+				this._render(this._options);
 			}, this));
 	}
 
@@ -1206,7 +1477,7 @@
 
 		// initialize new state and render changes
 		this._setInitialStates({nodes: this._tree}, 0)
-			.done(this._render.bind(this));
+			.done(this._render.bind(this, options));
 	};
 
 	/**
@@ -1223,21 +1494,17 @@
 		options = $.extend({}, _default.options, options);
 
 		// insert new node
-		var targetNodes;
-		var parentNode = this._nodes[node.parentId];
-		if (parentNode) {
-			targetNodes = parentNode.nodes;
-		} else {
-			targetNodes = this._tree;
-		}
-		targetNodes.splice(node.index, 1, newNode);
+		$.extend(node, newNode);
 
-		// remove old node from DOM
-		this._removeNodeEl(node);
+        this._renderNode(node);
+
+        if (options.no_render_all) {
+            return;
+        }
 
 		// initialize new state and render changes
 		this._setInitialStates({nodes: this._tree}, 0)
-			.done(this._render.bind(this));
+			.done(this._render.bind(this, options));
 	};
 
 
@@ -1310,7 +1577,6 @@
 	*/
 	Tree.prototype.collapseNode = function (nodes, options) {
 		options = $.extend({}, _default.options, options);
-
 		$.each(nodes, $.proxy(function (index, node) {
 			this._setExpanded(node, false, options);
 		}, this));
@@ -1339,6 +1605,13 @@
 		options = $.extend({}, _default.options, options);
 
 		$.each(nodes, $.proxy(function (index, node) {
+			// Do not re-expand already expanded nodes
+			if (node.state.expanded) return;
+
+			if (typeof(this._options.lazyLoad) === 'function' && node.lazyLoad) {
+				this._lazyLoad(node);
+			}
+
 			this._setExpanded(node, true, options);
 			if (node.nodes) {
 				this._expandLevels(node.nodes, options.levels-1, options);
@@ -1408,7 +1681,9 @@
 	Tree.prototype.checkAll = function (options) {
 		options = $.extend({}, _default.options, options);
 
-		var nodes = this._findNodes('false', 'state.checked');
+		var nodes = $.grep(this._orderedNodes, function (node) {
+			return !node.state.checked;
+		});
 		$.each(nodes, $.proxy(function (index, node) {
 			this._setChecked(node, true, options);
 		}, this));
@@ -1438,7 +1713,9 @@
 	Tree.prototype.uncheckAll = function (options) {
 		options = $.extend({}, _default.options, options);
 
-		var nodes = this._findNodes('true', 'state.checked');
+		var nodes = $.grep(this._orderedNodes, function (node) {
+			return node.state.checked || node.state.checked === undefined;
+		});
 		$.each(nodes, $.proxy(function (index, node) {
 			this._setChecked(node, false, options);
 		}, this));
@@ -1478,6 +1755,16 @@
 		}, this));
 	};
 
+	/**
+		Saves the current state of checkboxes as default, cleaning up any highlighted changes
+	*/
+	Tree.prototype.unmarkCheckboxChanges = function () {
+		this._inheritCheckboxChanges();
+
+		$.each(this._nodes, function (index, node) {
+			node.$el.removeClass('node-check-changed');
+		});
+	};
 
 	/**
 		Disable all tree nodes
@@ -1564,12 +1851,21 @@
 		@return {Array} nodes - Matching nodes
 	*/
 	Tree.prototype.search = function (pattern, options) {
+        function regExpEscape(literal_string) {
+            return literal_string.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
+        }
+
+        this._hasSearchPattern = pattern != null || pattern.length != 0;
+
 		options = $.extend({}, _default.searchOptions, options);
 
 		var previous = this._getSearchResults();
 		var results = [];
 
 		if (pattern && pattern.length > 0) {
+		    if (options.plainText) {
+		        pattern = regExpEscape(pattern);
+		    }
 
 			if (options.exactMatch) {
 				pattern = '^' + pattern + '$';
@@ -1580,7 +1876,7 @@
 				modifier += 'i';
 			}
 
-			results = this._findNodes(pattern, 'text', modifier);
+			results = this._findNodes(pattern, 'text', modifier, options);
 		}
 
 		// Clear previous results no longer matched
@@ -1607,6 +1903,8 @@
 		Clears previous search results
 	*/
 	Tree.prototype.clearSearch = function (options) {
+	    this._hasSearchPattern = false;
+
 		options = $.extend({}, { render: true }, options);
 
 		var results = $.each(this._getSearchResults(), $.proxy(function (index, node) {
@@ -1635,16 +1933,25 @@
 		@param {String} pattern - A given string to match against
 		@param {optional String} attribute - Attribute to compare pattern against
 		@param {optional String} modifier - Valid RegEx modifiers
+		@param {optional Object} options - Search criteria options
 		@return {Array} nodes - Nodes that match your criteria
 	*/
-	Tree.prototype._findNodes = function (pattern, attribute, modifier) {
+	Tree.prototype._findNodes = function (pattern, attribute, modifier, options) {
 		attribute = attribute || 'text';
 		modifier = modifier || 'g';
 		return $.grep(this._orderedNodes, $.proxy(function (node) {
 			var val = this._getNodeValue(node, attribute);
+			let result = true;
 			if (typeof val === 'string') {
-				return val.match(new RegExp(pattern, modifier));
+				result = val.match(new RegExp(pattern, modifier))
 			}
+
+            if (options && typeof(options.onMatched) === 'function') {
+                return options.onMatched(node, result != null);
+            }
+
+			return result;
+
 		}, this));
 	};
 
@@ -1663,7 +1970,7 @@
 			return this._getNodeValue(_obj, _attr);
 		}
 		else {
-			if (obj.hasOwnProperty(attr)) {
+			if (obj.hasOwnProperty(attr) && obj[attr] !== undefined) {
 				return obj[attr].toString();
 			}
 			else {
@@ -1683,6 +1990,9 @@
 	$.fn[pluginName] = function (options, args) {
 
 		var result;
+		if (this.length == 0) {
+			throw "No element has been found!";
+		}
 
 		this.each(function () {
 			var _this = $.data(this, pluginName);

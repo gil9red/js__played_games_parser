@@ -5,12 +5,12 @@
     <title>js__mini_played_games_parser</title>
 
     <link rel="stylesheet" type="text/css" href="static/bootstrap-4.3.1/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="static/bootstrap-treeview-2.0.0/bootstrap-treeview.css">
+    <link rel="stylesheet" type="text/css" href="static/my-bootstrap-treeview-2.1.0/my-bootstrap-treeview.css">
     <link rel="stylesheet" type="text/css" href="static/glyphicon/glyphicon.css">
 
     <script type="text/javascript" src="static/js/jquery-2.1.4.js"></script>
     <script type="text/javascript" src="static/bootstrap-4.3.1/bootstrap.js"></script>
-    <script type="text/javascript" src="static/bootstrap-treeview-2.0.0/bootstrap-treeview.js"></script>
+    <script type="text/javascript" src="static/my-bootstrap-treeview-2.1.0/my-bootstrap-treeview.js"></script>
     <script type="text/javascript" src="static/js/parser.js"></script>
 
     <style>
@@ -237,8 +237,6 @@
                 highlightSelected: false,
 
                 // Events
-                onNodeSelected: processClickNode,
-                onNodeUnselected: processClickNode,
                 onLoading: function(event) {
                     this.__startTime = new Date();
                 },
@@ -252,10 +250,37 @@
                 },
                 onSearchComplete: function(event, results) {
                     $("#tree .node-tree.game").each(function(index) {
-                        let node = $(this);
-                        node.toggle(node.hasClass("node-result"));
+                        let nodeEl = $(this);
+                        let nodeId = nodeEl.attr('data-nodeid');
+                        let node = $('#tree').treeview("getNode", [ nodeId ]);
+                        $('#tree').treeview("setVisible", [ node, node.searchResult ]);
                     });
+
+                    updateGamesNumbers();
                 },
+                onSearchCleared: function(event, results) {
+                    $("#tree .node-tree.node-hidden").each(function(index) {
+                        let nodeEl = $(this);
+                        let nodeId = nodeEl.attr('data-nodeid');
+                        let node = $('#tree').treeview("getNode", [ nodeId ]);
+                        $('#tree').treeview("setVisible", [ node, true ]);
+                    });
+
+                    updateGamesNumbers();
+
+                    $('#tree').treeview("expandAll");
+                },
+            });
+            $('#tree').on("click", function(event) {
+                let nodeEl = $(event.target);
+                let nodeId = nodeEl.attr('data-nodeid');
+                let node = $('#tree').treeview("getNode", [ nodeId ]);
+
+                if (node.nodes == undefined) {
+                    // ignore
+                    return;
+                }
+                $('#tree').treeview('toggleNodeExpanded', [ node ]);
             });
 
             setProgress(100);
@@ -314,27 +339,24 @@
 
             if (text.length == 0) {
                 tree.treeview('clearSearch');
-                tree.find(".node-tree.game:hidden").show();
                 return;
             }
+
+            tree.treeview("collapseAll");
 
             tree.treeview('search', [ text, {
                 ignoreCase: true,    // Case insensitive
                 exactMatch: false,   // Like or equals
                 revealResults: true, // Reveal matching nodes
-            }]);
-        }
+                onMatched: function(node, match) {
+                    // Only games
+                    if (node.level != 3) {
+                        return false;
+                    }
 
-        function processClickNode(event, node) {
-            if (node.nodes == undefined) {
-                // ignore
-                return;
-            }
-            if (node.state.expanded) {
-                $('#tree').treeview('collapseNode', [node.nodeId]);
-            } else {
-                $('#tree').treeview('expandNode', [node.nodeId]);
-            }
+                    return match;
+                }
+            }]);
         }
 
         function updateStatistics(platforms) {
@@ -351,6 +373,56 @@
 
             $('#stats_total_games').text(total_games);
             $('#stats_total_platforms').text(total_platforms);
+        }
+
+        function updateGamesNumbers() {
+            let categoryId_by_nums = new Map();
+            $("#tree .node-tree.game").not('.node-hidden').each(function(index) {
+                let nodeEl = $(this);
+                let nodeId = nodeEl.attr('data-nodeid');
+                let node = $('#tree').treeview("getNode", [nodeId]);
+
+                categoryId_by_nums.set(
+                    node.parentId,
+                    (categoryId_by_nums.get(node.parentId) || 0) + 1
+                );
+            });
+
+            let platformId_by_nums = new Map();
+            $("#tree .node-tree.category").each(function(index) {
+                let nodeEl = $(this);
+                let nodeId = nodeEl.attr('data-nodeid');
+                let node = $('#tree').treeview("getNode", [ nodeId ]);
+                let nums = categoryId_by_nums.get(nodeId) || 0;
+
+                platformId_by_nums.set(
+                    node.parentId,
+                    (platformId_by_nums.get(node.parentId) || 0) + nums
+                );
+
+                let newNode = {
+                    tags: [`(${nums})`],
+                    state: {
+                        visible: true,
+                        expanded: nums != 0,
+                    }
+                };
+                $('#tree').treeview("updateNode", [ node, newNode, {no_render_all: true} ]);
+            });
+
+            for ([platformId, nums] of platformId_by_nums.entries()) {
+                let node = $('#tree').treeview("getNode", [ platformId ]);
+                let newNode = {
+                    tags: [`(${nums})`],
+                    state: Object.assign({}, node.state),
+                };
+                newNode.state.expanded = nums != 0;
+                $('#tree').treeview("updateNode", [ node, newNode, {no_render_all: true} ]);
+
+                // TODO: Dirty hack
+                node.state.expanded = !node.state.expanded;
+                $('#tree').treeview("toggleNodeExpanded", [ [node] ]);
+            }
         }
 
         $(document).ready(function() {
