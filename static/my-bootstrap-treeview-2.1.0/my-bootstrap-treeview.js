@@ -619,9 +619,6 @@
 			if (node.nodes && options) {
 				$.each(node.nodes, $.proxy(function (index, node) {
 				    this._setDeepVisible(node, false, options);
-				    // TODO: remove old code
-					//this._setVisible(node, false, options);
-					//this._setExpanded(node, false, options);
 				}, this));
 			}
 
@@ -652,6 +649,13 @@
 		}
 	};
 
+	/**
+		Hierarchical change in node visibility
+		@param {Object} obj - Typically a node, could be any object
+		@param {Object} state
+		@param {Object} options
+		@param {Function} stateFunction - function stateFunction(node, state, options) => Boolean
+	*/
 	Tree.prototype._setDeepVisible = function (node, state, options, stateFunction) {
 	    if (stateFunction != undefined) {
 	        state = stateFunction(node, state, options);
