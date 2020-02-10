@@ -426,6 +426,25 @@
         $(document).ready(function() {
             $('#tree-search').on('input', search);
 
+            $("body").on("keyup paste", function(event) {
+                // If active tab is "Parser as Tree" or input to #tree-search
+                if ($('#nav-as_tree-tab.active').length == 0
+                    || event.target.id == 'tree-search') {
+                    return;
+                }
+
+                let search = $('#tree-search');
+                search.focus();
+
+                if (event.type == "keyup" && event.key.length == 1) {
+                    search.val(search.val() + event.key).trigger("input");
+
+                } else if (event.type == "paste") {
+                    let text = event.originalEvent.clipboardData.getData('text');
+                    search.val(search.val() + text).trigger("input");
+                }
+            })
+
             // SOURCE: https://stackoverflow.com/a/21494906/5909792
             // SOURCE: https://stackoverflow.com/a/50423867/5909792
             //
