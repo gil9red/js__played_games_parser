@@ -330,10 +330,9 @@
         }
 
         function search(e) {
-            console.log('Call search');
-
             let tree = $('#tree');
-            let text = $('#tree-search').val().rtrim();
+            let text = $('#tree-search').val();
+            console.log(`Call search "${text}"`);
 
             if (text.length == 0) {
                 tree.treeview('clearSearch');
@@ -424,7 +423,13 @@
         }
 
         $(document).ready(function() {
-            $('#tree-search').on('input', search);
+            var typingTimer = null;       // Timer identifier
+            var doneTypingInterval = 300; // Time in ms
+
+            $('#tree-search').on('input', function() {
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(search, doneTypingInterval);
+            });
 
             $("body").on("keyup paste", function(event) {
                 // If active tab is "Parser as Tree" or input to #tree-search
