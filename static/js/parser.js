@@ -199,7 +199,7 @@ function getJsonForTreeView(platforms) {
 
             for (let game_name of games) {
                 category.nodes.push({
-                    class: `game ${category_name} text-truncate`,
+                    class: `game ${category_name} noselect text-truncate`,
                     text: game_name,
                 });
             }
