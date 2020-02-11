@@ -256,7 +256,7 @@
 
                             var longPressTimer = null;
 
-                            node.$el.on('mousedown', function(event) {
+                            node.$el.on('mousedown touchstart', function(event) {
                                 longPressTimer = setTimeout(() => {
                                     // Show tooltip
                                     node.$el.tooltip('show');
@@ -264,7 +264,7 @@
 
                                 }, 2000);
 
-                            }).on('mouseup mouseleave', function() {
+                            }).on('mouseup mouseleave touchend', function() {
                                 clearTimeout(longPressTimer);
                             });
                         });
