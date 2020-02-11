@@ -177,7 +177,7 @@ function getJsonForTreeView(platforms) {
 
     for (let [platform_name, categories] of platforms) {
         platform = {
-            class: 'platform noselect',
+            class: 'platform noselect text-truncate',
             text: platform_name,
             nodes: [],
             tags: [],
@@ -190,7 +190,7 @@ function getJsonForTreeView(platforms) {
             total_games += total;
 
             category = {
-                class: 'category ' + category_name + ' noselect',
+                class: `category ${category_name} noselect text-truncate`,
                 text: CATEGORY_BY_TITLE.get(category_name),
                 nodes: [],
                 tags: [`(${total})`],
@@ -199,7 +199,7 @@ function getJsonForTreeView(platforms) {
 
             for (let game_name of games) {
                 category.nodes.push({
-                    class: 'game ' + category_name,
+                    class: `game ${category_name} text-truncate`,
                     text: game_name,
                 });
             }
@@ -211,27 +211,3 @@ function getJsonForTreeView(platforms) {
     }
     return data;
 }
-
-
-//var fs = require('fs'),
-//    path = require('path'),
-//    filePath = path.join(__dirname, 'gistfile1.txt');
-//
-//let text = fs.readFileSync(filePath, 'utf-8').toString();
-//let platforms = parse_played_games(text);
-////console.log(
-////    platforms
-////);
-//console.log(
-//    stringifyMap(platforms)
-//);
-////platforms = mapToAoO(platforms);
-////console.log(
-////    platforms
-////);
-////console.log(
-////    JSON.stringify(platforms)
-////);
-////console.log(
-////    JSON.stringify(platforms)
-////);
