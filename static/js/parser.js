@@ -101,12 +101,23 @@ function parse_game_name(game_name) {
 /**
  * Функция для парсинга файлов в gist.github.com
  */
-function parse_gist_file(html) {
+function parse_gist_file(html_text) {
+    function _process(node) {
+        return node.text().rtrim().replace(/\u00a0/g, ' ');
+    }
+
+    let html = $('<div></div>').append($.parseHTML(html_text));
+
+    // For debug
+    let is_mobile = html.find('.gist-mobile-blob').length == 1;
+    console.log("is_mobile: " + is_mobile);
+
     let lines = [];
 
-    $(html).find('.js-file-line.blob-code').each(function( index ) {
-        let line = $(this).text().rtrim().replace(/\u00a0/g, ' ');
-        lines.push(line);
+    html.find('.js-file-line').each(function( index ) {
+        lines.push(
+            _process($(this))
+        );
     });
 
     if (lines.length == 0) {
