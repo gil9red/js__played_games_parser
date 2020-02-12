@@ -99,6 +99,26 @@ function parse_game_name(game_name) {
 
 
 /**
+ * Функция для парсинга файлов в gist.github.com
+ */
+function parse_gist_file(html) {
+    let lines = [];
+
+    $(html).find('.js-file-line.blob-code').each(function( index ) {
+        let line = $(this).text().rtrim().replace(/\u00a0/g, ' ');
+        lines.push(line);
+    });
+
+    if (lines.length == 0) {
+        show_error("No parse url_gist!");
+        return null;
+    }
+
+    return lines.join('\n');
+}
+
+
+/**
  * Функция для парсинга списка игр.
  */
 function parse_played_games(text) {
