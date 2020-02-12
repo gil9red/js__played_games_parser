@@ -163,10 +163,9 @@
         function parse_gist_file(html) {
             let lines = [];
 
-            $(html).find('.js-file-line').each(function( index ) {
-                lines.push(
-                    $(this).text().replace(/\u00a0/g, ' ')
-                );
+            $(html).find('.js-file-line.blob-code').each(function( index ) {
+                let line = $(this).text().rtrim().replace(/\u00a0/g, ' ');
+                lines.push(line);
             });
 
             if (lines.length == 0) {
