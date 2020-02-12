@@ -18,12 +18,12 @@
  * ========================================================= */
 
 .treeview .list-group-item {
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .treeview span.indent {
-	margin-left: 10px;
-	margin-right: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 
