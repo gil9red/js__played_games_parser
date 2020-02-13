@@ -124,18 +124,20 @@
                 <textarea readonly="readonly" id="result_raw" cols="100" rows="10"></textarea>
             </div>
             <div class="tab-pane fade" id="nav-as_json" role="tabpanel" aria-labelledby="nav-as_json-tab">
-                <nav>
-                    <div class="nav nav-tabs justify-content-end" id="nav-tab_result_json" role="tablist">
-                        <a class="nav-item nav-link active" id="nav-result_json_view-tab" data-toggle="tab" href="#nav-result_json_view" role="tab" aria-controls="nav-result_json_view" aria-selected="true">VIEW</a>
-                        <a class="nav-item nav-link" id="nav-result_json-tab" data-toggle="tab" href="#nav-result_json" role="tab" aria-controls="nav-result_json" aria-selected="false">RAW</a>
-                    </div>
-                </nav>
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="nav-result_json_view" role="tabpanel" aria-labelledby="nav-result_json_view-tab">
-                        <pre id="result_json_view" class="code-json"></pre>
-                    </div>
-                    <div class="tab-pane fade" id="nav-result_json" role="tabpanel" aria-labelledby="nav-result_json-tab">
-                        <pre id="result_json" class="code-json"></pre>
+                <div class="d-flex">
+                    <nav>
+                        <div class="nav nav-pills justify-content-end" id="nav-tab_result_json" role="tablist">
+                            <a class="nav-item nav-link small text-uppercase active" id="nav-result_json_view-tab" data-toggle="tab" href="#nav-result_json_view" role="tab" aria-controls="nav-result_json_view" aria-selected="true">View</a>
+                            <a class="nav-item nav-link small text-uppercase" id="nav-result_json-tab" data-toggle="tab" href="#nav-result_json" role="tab" aria-controls="nav-result_json" aria-selected="false">Raw</a>
+                        </div>
+                    </nav>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="nav-result_json_view" role="tabpanel" aria-labelledby="nav-result_json_view-tab">
+                            <pre id="result_json_view" class="code-json"></pre>
+                        </div>
+                        <div class="tab-pane fade" id="nav-result_json" role="tabpanel" aria-labelledby="nav-result_json-tab">
+                            <pre id="result_json" class="code-json"></pre>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -163,18 +165,20 @@
                 </div>
             </div>
             <div class="tab-pane fade" id="nav-as_tree_raw" role="tabpanel" aria-labelledby="nav-as_tree_raw-tab">
-                <nav>
-                    <div class="nav nav-tabs justify-content-end" id="nav-tab_tree_raw" role="tablist">
-                        <a class="nav-item nav-link active" id="nav-tree_raw_view-tab" data-toggle="tab" href="#nav-tree_raw_view" role="tab" aria-controls="nav-tree_raw_view" aria-selected="true">VIEW</a>
-                        <a class="nav-item nav-link" id="nav-tree_raw-tab" data-toggle="tab" href="#nav-tree_raw" role="tab" aria-controls="nav-tree_raw" aria-selected="false">RAW</a>
-                    </div>
-                </nav>
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="nav-tree_raw_view" role="tabpanel" aria-labelledby="nav-tree_raw_view-tab">
-                        <pre id="tree_raw_view" class="code-json"></pre>
-                    </div>
-                    <div class="tab-pane fade" id="nav-tree_raw" role="tabpanel" aria-labelledby="nav-tree_raw-tab">
-                        <pre id="tree_raw" class="code-json"></pre>
+                <div class="d-flex">
+                    <nav>
+                        <div class="nav nav-pills" id="nav-tab_tree_raw" role="tablist">
+                            <a class="nav-item nav-link small text-uppercase active" id="nav-tree_raw_view-tab" data-toggle="tab" href="#nav-tree_raw_view" role="tab" aria-controls="nav-tree_raw_view" aria-selected="true">View</a>
+                            <a class="nav-item nav-link small text-uppercase" id="nav-tree_raw-tab" data-toggle="tab" href="#nav-tree_raw" role="tab" aria-controls="nav-tree_raw" aria-selected="false">Raw</a>
+                        </div>
+                    </nav>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="nav-tree_raw_view" role="tabpanel" aria-labelledby="nav-tree_raw_view-tab">
+                            <pre id="tree_raw_view" class="code-json"></pre>
+                        </div>
+                        <div class="tab-pane fade" id="nav-tree_raw" role="tabpanel" aria-labelledby="nav-tree_raw-tab">
+                            <pre id="tree_raw" class="code-json"></pre>
+                        </div>
                     </div>
                 </div>
             </div>
