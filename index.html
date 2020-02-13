@@ -236,8 +236,7 @@
                     this.__startTime = new Date();
                 },
                 onRendered: function(event, nodes) {
-                    let endTime = new Date();
-                    var timeDiff = endTime - this.__startTime; // ms
+                    var timeDiff = new Date() - this.__startTime; // ms
                     console.log(`Elapsed time building: ${timeDiff} ms`);
 
                     // NOTE: Fix error "Not initialized, can not call method : search"
@@ -278,6 +277,9 @@
                     });
 
                     updateGamesNumbers();
+
+                    var timeDiff = new Date() - window.__startTimeSearch; // ms
+                    console.log(`Elapsed time search: ${timeDiff} ms [onSearchComplete]`);
                 },
                 onSearchCleared: function(event, results) {
                     $("#tree .node-tree.node-hidden").each(function(index) {
@@ -290,6 +292,9 @@
                     updateGamesNumbers();
 
                     $('#tree').treeview("expandAll");
+
+                    var timeDiff = new Date() - window.__startTimeSearch; // ms
+                    console.log(`Elapsed time search: ${timeDiff} ms [onSearchCleared]`);
                 },
             });
             $('#tree').on("click", function(event) {
@@ -353,6 +358,8 @@
         }
 
         function search(e) {
+            window.__startTimeSearch = new Date();
+
             let tree = $('#tree');
             let text = $('#tree-search').val();
             console.log(`Call search "${text}"`);
