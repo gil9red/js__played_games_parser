@@ -7,14 +7,16 @@
     <link rel="stylesheet" type="text/css" href="static/bootstrap-4.4.1/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="static/my-bootstrap-treeview-2.1.0/my-bootstrap-treeview.css">
     <link rel="stylesheet" type="text/css" href="static/glyphicon/glyphicon.css">
+    <link rel="stylesheet" type="text/css" href="static/jquery.jsonview/jquery.jsonview.css">
 
     <script type="text/javascript" src="static/js/jquery-2.1.4.js"></script>
     <script type="text/javascript" src="static/bootstrap-4.4.1/bootstrap.bundle.js"></script>
     <script type="text/javascript" src="static/my-bootstrap-treeview-2.1.0/my-bootstrap-treeview.js"></script>
     <script type="text/javascript" src="static/js/parser.js"></script>
+    <script type="text/javascript" src="static/jquery.jsonview/jquery.jsonview.js"></script>
 
     <style>
-        textarea {
+        pre.code-json, textarea {
             overflow: scroll;
             white-space: pre;
             font-family: "Lucida Console", Monaco, monospace;
@@ -122,7 +124,20 @@
                 <textarea readonly="readonly" id="result_raw" cols="100" rows="10"></textarea>
             </div>
             <div class="tab-pane fade" id="nav-as_json" role="tabpanel" aria-labelledby="nav-as_json-tab">
-                <textarea readonly="readonly" id="result_json" cols="100" rows="10"></textarea>
+                <nav>
+                    <div class="nav nav-tabs justify-content-end" id="nav-tab_result_json" role="tablist">
+                        <a class="nav-item nav-link active" id="nav-result_json_view-tab" data-toggle="tab" href="#nav-result_json_view" role="tab" aria-controls="nav-result_json_view" aria-selected="true">VIEW</a>
+                        <a class="nav-item nav-link" id="nav-result_json-tab" data-toggle="tab" href="#nav-result_json" role="tab" aria-controls="nav-result_json" aria-selected="false">RAW</a>
+                    </div>
+                </nav>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="nav-result_json_view" role="tabpanel" aria-labelledby="nav-result_json_view-tab">
+                        <pre id="result_json_view" class="code-json"></pre>
+                    </div>
+                    <div class="tab-pane fade" id="nav-result_json" role="tabpanel" aria-labelledby="nav-result_json-tab">
+                        <pre id="result_json" class="code-json"></pre>
+                    </div>
+                </div>
             </div>
             <div class="tab-pane fade" id="nav-as_tree" role="tabpanel" aria-labelledby="nav-as_tree-tab">
                 <div class="container-fluid ml-0 mr-0 pl-0 pr-0">
@@ -148,7 +163,20 @@
                 </div>
             </div>
             <div class="tab-pane fade" id="nav-as_tree_raw" role="tabpanel" aria-labelledby="nav-as_tree_raw-tab">
-                <textarea readonly="readonly" id="tree_raw" cols="100" rows="10"></textarea>
+                <nav>
+                    <div class="nav nav-tabs justify-content-end" id="nav-tab_tree_raw" role="tablist">
+                        <a class="nav-item nav-link active" id="nav-tree_raw_view-tab" data-toggle="tab" href="#nav-tree_raw_view" role="tab" aria-controls="nav-tree_raw_view" aria-selected="true">VIEW</a>
+                        <a class="nav-item nav-link" id="nav-tree_raw-tab" data-toggle="tab" href="#nav-tree_raw" role="tab" aria-controls="nav-tree_raw" aria-selected="false">RAW</a>
+                    </div>
+                </nav>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="nav-tree_raw_view" role="tabpanel" aria-labelledby="nav-tree_raw_view-tab">
+                        <pre id="tree_raw_view" class="code-json"></pre>
+                    </div>
+                    <div class="tab-pane fade" id="nav-tree_raw" role="tabpanel" aria-labelledby="nav-tree_raw-tab">
+                        <pre id="tree_raw" class="code-json"></pre>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -218,9 +246,15 @@
         }
 
         function update_tabs(result_raw, result_json, tree_raw, tree_data) {
+            let startTime = new Date();
+
             $('#result_raw').text(result_raw);
+
             $('#result_json').text(result_json);
+            $('#result_json_view').JSONView(result_json);
+
             $('#tree_raw').text(tree_raw);
+            $('#tree_raw_view').JSONView(tree_raw);
 
             $('#tree').treeview({
                 data: tree_data,
@@ -313,6 +347,9 @@
 
             let platforms = JSON.parse(result_json);
             updateStatistics(platforms);
+
+            var timeDiff = new Date() - startTime; // ms
+            console.log(`Elapsed time update_tabs: ${timeDiff} ms`);
         }
 
         function process_text_file_gist(text) {
@@ -488,8 +525,8 @@
                 $("a[href='" + location.hash + "']").tab("show");
             } else {
                 var activeTab = localStorage.getItem('activeTab');
-                if (activeTab){
-                    $('.nav-tabs a[href="' + activeTab + '"]').tab('show');
+                if (activeTab) {
+                    $('#nav-tab a[href="' + activeTab + '"]').tab('show');
                 }
             }
 
@@ -498,7 +535,7 @@
                 $("a[href='" + anchor + "']").tab("show");
             });
 
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            $('#nav-tab > a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                 let tab_href = $(e.target).attr('href');
                 localStorage.setItem('activeTab', tab_href);
 
