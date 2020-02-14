@@ -45,7 +45,7 @@
         checkedIcon: 'glyphicon glyphicon-check',
         partiallyCheckedIcon: 'glyphicon glyphicon-expand',
         uncheckedIcon: 'glyphicon glyphicon-unchecked',
-        tagsClass: 'badge',
+        tagsClass: 'badge badge-secondary',
 
         color: undefined,
         backColor: undefined,

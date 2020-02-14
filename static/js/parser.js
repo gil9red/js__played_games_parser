@@ -224,7 +224,7 @@ function getJsonForTreeView(platforms) {
                 class: `category ${category_name} noselect text-truncate`,
                 text: CATEGORY_BY_TITLE.get(category_name),
                 nodes: [],
-                tags: [`(${total})`],
+                tags: [`${total}`],
             };
             platform.nodes.push(category);
 
@@ -236,7 +236,7 @@ function getJsonForTreeView(platforms) {
             }
         }
 
-        platform.tags.push(`(${total_games})`);
+        platform.tags.push(`${total_games}`);
 
         data.push(platform);
     }

@@ -52,6 +52,10 @@
             }
         }
 
+        .treeview .badge {
+            margin-left: 0.4em;
+        }
+
         .noselect {
           -webkit-touch-callout: none; /* iOS Safari */
             -webkit-user-select: none; /* Safari */
@@ -469,7 +473,7 @@
                 );
 
                 let newNode = {
-                    tags: [`(${nums})`],
+                    tags: [`${nums}`],
                     state: {
                         visible: true,
                         expanded: nums != 0,
@@ -481,7 +485,7 @@
             for ([platformId, nums] of platformId_by_nums.entries()) {
                 let node = $('#tree').treeview("getNode", [ platformId ]);
                 let newNode = {
-                    tags: [`(${nums})`],
+                    tags: [`${nums}`],
                     state: Object.assign({}, node.state),
                 };
                 newNode.state.expanded = nums != 0;
