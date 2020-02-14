@@ -395,7 +395,7 @@
                     // ignore
                     return;
                 }
-                $('#tree').treeview('toggleNodeExpanded', [ node ]);
+                $('#tree').treeview('toggleNodeExpanded', [ node, {is_user_click: true} ]);
             });
 
             setProgress(100);
