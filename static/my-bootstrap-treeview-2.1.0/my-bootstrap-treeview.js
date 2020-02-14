@@ -1580,7 +1580,12 @@
         @param {optional Object} options
     */
     Tree.prototype.collapseNode = function (nodes, options) {
+        if (!(nodes instanceof Array)) {
+            nodes = [nodes];
+        }
+
         options = $.extend({}, _default.options, options);
+
         $.each(nodes, $.proxy(function (index, node) {
             this._setExpanded(node, false, options);
         }, this));
