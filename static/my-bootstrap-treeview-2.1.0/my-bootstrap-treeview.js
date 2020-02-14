@@ -361,6 +361,9 @@
 
     Tree.prototype._triggerEvent = function (event, data, options) {
         if (options && !options.silent) {
+            var event = jQuery.Event(event);
+            event.is_user_click = options.is_user_click == true;
+
             this.$element.trigger(event, $.extend(true, {}, data));
         }
     }
@@ -500,25 +503,26 @@
     };
 
     Tree.prototype._clickHandler = function (event) {
-
         var target = $(event.target);
         var node = this.targetNode(target);
         if (!node || node.state.disabled) return;
 
+        let options = $.extend({}, _default.options, {is_user_click: true});
+
         var classList = target.attr('class') ? target.attr('class').split(' ') : [];
         if ((classList.indexOf('expand-icon') !== -1)) {
-            this._toggleExpanded(node, $.extend({}, _default.options));
+            this._toggleExpanded(node, $.extend({}, options));
         }
         else if ((classList.indexOf('check-icon') !== -1)) {
             if (node.checkable) {
-                this._toggleChecked(node, $.extend({}, _default.options));
+                this._toggleChecked(node, $.extend({}, options));
             }
         }
         else {
             if (node.selectable) {
-                this._toggleSelected(node, $.extend({}, _default.options));
+                this._toggleSelected(node, $.extend({}, options));
             } else {
-                this._toggleExpanded(node, $.extend({}, _default.options));
+                this._toggleExpanded(node, $.extend({}, options));
             }
         }
     };

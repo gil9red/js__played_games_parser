@@ -253,6 +253,49 @@
             });
         }
 
+        function onChangeNodeExpanded(event, node) {
+            // Обработка событий, инициированных действиями пользователя
+            if (!event.is_user_click) {
+                return;
+            }
+
+            let nodeExpandedStates = null;
+            if (localStorage.nodeExpandedStates == null) {
+                nodeExpandedStates = new Map();
+            } else {
+                nodeExpandedStates = new Map(JSON.parse(localStorage.nodeExpandedStates));
+            }
+
+            nodeExpandedStates.set(node.nodeId, node.state.expanded);
+
+            localStorage.nodeExpandedStates = JSON.stringify(
+                Array.from(nodeExpandedStates.entries())
+            );
+        }
+
+        function restoreNodesState() {
+            if (localStorage.nodeExpandedStates == null) {
+                return;
+            }
+
+            let tree = $('#tree');
+            let startTime = new Date();
+
+            let nodeExpandedStates = new Map(JSON.parse(localStorage.nodeExpandedStates));
+            for (let [nodeId, expanded] of nodeExpandedStates.entries()) {
+                let node = tree.treeview("getNode", [ nodeId ]);
+
+                if (expanded) {
+                    tree.treeview("expandNode", [ node ]);
+                } else {
+                    tree.treeview("collapseNode", [ node ]);
+                }
+            }
+
+            var timeDiff = new Date() - startTime; // ms
+            console.log(`Elapsed time restore nodes state: ${timeDiff} ms`);
+        }
+
         function update_tabs(result_raw, result_json, tree_raw, tree_data) {
             let startTime = new Date();
 
@@ -274,6 +317,8 @@
                 highlightSelected: false,
 
                 // Events
+                onNodeCollapsed: onChangeNodeExpanded,
+                onNodeExpanded: onChangeNodeExpanded,
                 onLoading: function(event) {
                     this.__startTime = new Date();
                 },
@@ -322,6 +367,8 @@
 
                     var timeDiff = new Date() - window.__startTimeSearch; // ms
                     console.log(`Elapsed time search: ${timeDiff} ms [onSearchComplete]`);
+
+                    restoreNodesState();
                 },
                 onSearchCleared: function(event, results) {
                     $("#tree .node-tree.node-hidden").each(function(index) {
@@ -333,7 +380,7 @@
 
                     updateGamesNumbers();
 
-                    $('#tree').treeview("expandAll");
+                    restoreNodesState();
 
                     var timeDiff = new Date() - window.__startTimeSearch; // ms
                     console.log(`Elapsed time search: ${timeDiff} ms [onSearchCleared]`);
@@ -414,7 +461,7 @@
                 return;
             }
 
-            tree.treeview("collapseAll");
+            tree.treeview("collapseAll", [ {silent: true} ]);
 
             tree.treeview('search', [ text, {
                 ignoreCase: true,    // Case insensitive
