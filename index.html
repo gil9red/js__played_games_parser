@@ -149,7 +149,10 @@
                 <div class="container-fluid ml-0 mr-0 pl-0 pr-0">
                     <div class="row flex-row-reverse">
                         <div class="col-md-2">
-                            <table class="table">
+                            <button class="btn btn-outline-secondary btn-sm m-1 w-100 collapse_table_stats" data-toggle="collapse" data-target="#table_stats" aria-expanded="false" aria-controls="collapse-projects">
+                                <span class="glyphicon glyphicon-triangle-bottom"></span>
+                            </button>
+                            <table id="table_stats" class="table collapse">
                                 <tr><td>Игр:</td><td id="stats_total_games"></td></tr>
                                 <tr><td>Платформ:</td><td id="stats_total_platforms"></td></tr>
                             </table>
@@ -197,6 +200,25 @@
                 options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
                 //options.url = "http://cors.corsproxy.io/url=" + options.url;
             }
+        });
+
+        // SOURCE: https://stackoverflow.com/a/43406729/5909792
+        $(document).ready(function () {
+            $('.collapse')
+                .on('shown.bs.collapse', function() {
+                    $(this)
+                        .parent()
+                        .find(".glyphicon-triangle-bottom")
+                        .removeClass("glyphicon-triangle-bottom")
+                        .addClass("glyphicon-triangle-top");
+                })
+                .on('hidden.bs.collapse', function() {
+                    $(this)
+                        .parent()
+                        .find(".glyphicon-triangle-top")
+                        .removeClass("glyphicon-triangle-top")
+                        .addClass("glyphicon-triangle-bottom");
+                });
         });
 
         function show_error(text) {
