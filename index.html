@@ -344,10 +344,10 @@
                 // Events
                 onNodeCollapsed: onChangeNodeExpanded,
                 onNodeExpanded: onChangeNodeExpanded,
-                onLoading: event => {
+                onLoading: function(e) {
                     this.__startTime = new Date();
                 },
-                onRendered: (event, nodes) => {
+                onRendered: function(event, nodes) {
                     var timeDiff = new Date() - this.__startTime; // ms
                     console.log(`Elapsed time building: ${timeDiff} ms`);
                     $('#elapsed_time_building').text(timeDiff);
@@ -359,7 +359,7 @@
                     // TODO: Bugfix "Not initialized, can not call method : getNodes"
                     setTimeout(() => {
                         let nodes = $('#tree').treeview("getNodes");
-                        $.each(nodes, (index, node) => {
+                        $.each(nodes, function(index, node) {
                             node.$el
                                 .attr('data-toggle', 'tooltip')
                                 .attr('data-original-title', node.text)
@@ -367,21 +367,21 @@
 
                             var longPressTimer = null;
 
-                            node.$el.on('mousedown touchstart', event => {
+                            node.$el.on('mousedown touchstart', function(event) {
                                 longPressTimer = setTimeout(() => {
                                     // Show tooltip
                                     node.$el.tooltip('show');
-                                    setTimeout(() => { node.$el.tooltip('hide') }, 1000);
+                                    setTimeout(() => node.$el.tooltip('hide'), 1000);
 
                                 }, 2000);
 
-                            }).on('mouseup mouseleave touchend', () => {
+                            }).on('mouseup mouseleave touchend', function() {
                                 clearTimeout(longPressTimer);
                             });
                         });
                     }, 50);
                 },
-                onSearchComplete: (event, results) => {
+                onSearchComplete: function(event, results) {
                     $("#tree .node-tree.game").each( function(index) {
                         let nodeEl = $(this);
                         let nodeId = nodeEl.attr('data-nodeid');
@@ -397,7 +397,7 @@
 
                     restoreNodesState();
                 },
-                onSearchCleared: (event, results) => {
+                onSearchCleared: function(event, results) {
                     $("#tree .node-tree.node-hidden").each( function(index) {
                         let nodeEl = $(this);
                         let nodeId = nodeEl.attr('data-nodeid');
@@ -414,7 +414,7 @@
                     $('#elapsed_time_search').text("-");
                 },
             });
-            $('#tree').on("click", event => {
+            $('#tree').on("click", function(event) {
                 let nodeEl = $(event.target);
                 let nodeId = nodeEl.attr('data-nodeid');
                 let node = $('#tree').treeview("getNode", [ nodeId ]);
@@ -496,7 +496,7 @@
                 ignoreCase: true,    // Case insensitive
                 exactMatch: false,   // Like or equals
                 revealResults: true, // Reveal matching nodes
-                onMatched: (node, match) => {
+                onMatched: function(node, match) {
                     // Only games
                     if (node.level != 3) {
                         return false;
@@ -573,16 +573,16 @@
             }
         }
 
-        $(document).ready(() => {
+        $(document).ready(function() {
             var typingTimer = null;       // Timer identifier
             var doneTypingInterval = 300; // Time in ms
 
-            $('#tree-search').on('input', () => {
+            $('#tree-search').on('input', function() {
                 clearTimeout(typingTimer);
                 typingTimer = setTimeout(search, doneTypingInterval);
             });
 
-            $("body").on("keyup paste", event => {
+            $("body").on("keyup paste", function(event) {
                 // If active tab is "Parser as Tree" or input to #tree-search
                 if ($('#nav-as_tree-tab.active').length == 0
                     || event.target.id == 'tree-search') {
@@ -614,12 +614,12 @@
                 }
             }
 
-            $(window).on("popstate", () => {
+            $(window).on("popstate", function() {
                 var anchor = location.hash || $("a[data-toggle='tab']").first().attr("href");
                 $("a[href='" + anchor + "']").tab("show");
             });
 
-            $('#nav-tab > a[data-toggle="tab"]').on('shown.bs.tab', e => {
+            $('#nav-tab > a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
                 let tab_href = $(e.target).attr('href');
                 localStorage.setItem('activeTab', tab_href);
 
@@ -634,7 +634,7 @@
         const url_gist = "https://gist.github.com/gil9red/2f80a34fb601cd685353";
         $('#url_gist').attr('href', url_gist).text(url_gist);
 
-        $(document).ready(() => {
+        $(document).ready(function() {
             // Попробуем при загрузке страницы вытащить данные из кэша
             if (localStorage.cache_text_file_gist != null) {
                 console.log("Build from cache");
