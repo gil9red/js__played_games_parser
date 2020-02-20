@@ -208,14 +208,14 @@
         // SOURCE: https://stackoverflow.com/a/43406729/5909792
         $(document).ready(function () {
             $('.collapse')
-                .on('shown.bs.collapse', () => {
+                .on('shown.bs.collapse', function() {
                     $(this)
                         .parent()
                         .find(".glyphicon-triangle-bottom")
                         .removeClass("glyphicon-triangle-bottom")
                         .addClass("glyphicon-triangle-top");
                 })
-                .on('hidden.bs.collapse', () => {
+                .on('hidden.bs.collapse', function() {
                     $(this)
                         .parent()
                         .find(".glyphicon-triangle-top")
@@ -382,7 +382,7 @@
                     }, 50);
                 },
                 onSearchComplete: (event, results) => {
-                    $("#tree .node-tree.game").each(index => {
+                    $("#tree .node-tree.game").each( function(index) {
                         let nodeEl = $(this);
                         let nodeId = nodeEl.attr('data-nodeid');
                         let node = $('#tree').treeview("getNode", [ nodeId ]);
@@ -398,7 +398,7 @@
                     restoreNodesState();
                 },
                 onSearchCleared: (event, results) => {
-                    $("#tree .node-tree.node-hidden").each(index => {
+                    $("#tree .node-tree.node-hidden").each( function(index) {
                         let nodeEl = $(this);
                         let nodeId = nodeEl.attr('data-nodeid');
                         let node = $('#tree').treeview("getNode", [ nodeId ]);
@@ -525,7 +525,7 @@
 
         function updateGamesNumbers() {
             let categoryId_by_nums = new Map();
-            $("#tree .node-tree.game").not('.node-hidden').each(index => {
+            $("#tree .node-tree.game").not('.node-hidden').each( function(index) {
                 let nodeEl = $(this);
                 let nodeId = nodeEl.attr('data-nodeid');
                 let node = $('#tree').treeview("getNode", [nodeId]);
@@ -537,7 +537,7 @@
             });
 
             let platformId_by_nums = new Map();
-            $("#tree .node-tree.category").each(index => {
+            $("#tree .node-tree.category").each( function(index) {
                 let nodeEl = $(this);
                 let nodeId = nodeEl.attr('data-nodeid');
                 let node = $('#tree').treeview("getNode", [ nodeId ]);
