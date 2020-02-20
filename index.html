@@ -197,7 +197,7 @@
 
     <script>
         // Для обхода: "Запрос из постороннего источника заблокирован: Политика одного источника запрещает чтение удаленного ресурса"
-        $.ajaxPrefilter( function (options) {
+        $.ajaxPrefilter(options => {
             if (options.crossDomain && jQuery.support.cors) {
                 var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
                 options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
@@ -242,7 +242,7 @@
 
             setProgress(1);
 
-            $.get(url_gist, function(response) {
+            $.get(url_gist, response => {
                 setProgress(25);
 
                 let text = parse_gist_file(response);
@@ -263,7 +263,7 @@
                 return;
             }
 
-            $.get(url_gist, function(response) {
+            $.get(url_gist, response => {
                 let is_actual_cache = parse_gist_file(response) == localStorage.cache_text_file_gist;
 
                 // Если кэш актуален
@@ -344,10 +344,10 @@
                 // Events
                 onNodeCollapsed: onChangeNodeExpanded,
                 onNodeExpanded: onChangeNodeExpanded,
-                onLoading: function(event) {
+                onLoading: event => {
                     this.__startTime = new Date();
                 },
-                onRendered: function(event, nodes) {
+                onRendered: (event, nodes) => {
                     var timeDiff = new Date() - this.__startTime; // ms
                     console.log(`Elapsed time building: ${timeDiff} ms`);
                     $('#elapsed_time_building').text(timeDiff);
@@ -367,7 +367,7 @@
 
                             var longPressTimer = null;
 
-                            node.$el.on('mousedown touchstart', function(event) {
+                            node.$el.on('mousedown touchstart', event => {
                                 longPressTimer = setTimeout(() => {
                                     // Show tooltip
                                     node.$el.tooltip('show');
@@ -381,8 +381,8 @@
                         });
                     }, 50);
                 },
-                onSearchComplete: function(event, results) {
-                    $("#tree .node-tree.game").each(function(index) {
+                onSearchComplete: (event, results) => {
+                    $("#tree .node-tree.game").each(index => {
                         let nodeEl = $(this);
                         let nodeId = nodeEl.attr('data-nodeid');
                         let node = $('#tree').treeview("getNode", [ nodeId ]);
@@ -397,8 +397,8 @@
 
                     restoreNodesState();
                 },
-                onSearchCleared: function(event, results) {
-                    $("#tree .node-tree.node-hidden").each(function(index) {
+                onSearchCleared: (event, results) => {
+                    $("#tree .node-tree.node-hidden").each(index => {
                         let nodeEl = $(this);
                         let nodeId = nodeEl.attr('data-nodeid');
                         let node = $('#tree').treeview("getNode", [ nodeId ]);
@@ -414,7 +414,7 @@
                     $('#elapsed_time_search').text("-");
                 },
             });
-            $('#tree').on("click", function(event) {
+            $('#tree').on("click", event => {
                 let nodeEl = $(event.target);
                 let nodeId = nodeEl.attr('data-nodeid');
                 let node = $('#tree').treeview("getNode", [ nodeId ]);
@@ -496,7 +496,7 @@
                 ignoreCase: true,    // Case insensitive
                 exactMatch: false,   // Like or equals
                 revealResults: true, // Reveal matching nodes
-                onMatched: function(node, match) {
+                onMatched: (node, match) => {
                     // Only games
                     if (node.level != 3) {
                         return false;
@@ -525,7 +525,7 @@
 
         function updateGamesNumbers() {
             let categoryId_by_nums = new Map();
-            $("#tree .node-tree.game").not('.node-hidden').each(function(index) {
+            $("#tree .node-tree.game").not('.node-hidden').each(index => {
                 let nodeEl = $(this);
                 let nodeId = nodeEl.attr('data-nodeid');
                 let node = $('#tree').treeview("getNode", [nodeId]);
@@ -537,7 +537,7 @@
             });
 
             let platformId_by_nums = new Map();
-            $("#tree .node-tree.category").each(function(index) {
+            $("#tree .node-tree.category").each(index => {
                 let nodeEl = $(this);
                 let nodeId = nodeEl.attr('data-nodeid');
                 let node = $('#tree').treeview("getNode", [ nodeId ]);
@@ -582,7 +582,7 @@
                 typingTimer = setTimeout(search, doneTypingInterval);
             });
 
-            $("body").on("keyup paste", function(event) {
+            $("body").on("keyup paste", event => {
                 // If active tab is "Parser as Tree" or input to #tree-search
                 if ($('#nav-as_tree-tab.active').length == 0
                     || event.target.id == 'tree-search') {
@@ -619,7 +619,7 @@
                 $("a[href='" + anchor + "']").tab("show");
             });
 
-            $('#nav-tab > a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            $('#nav-tab > a[data-toggle="tab"]').on('shown.bs.tab', e => {
                 let tab_href = $(e.target).attr('href');
                 localStorage.setItem('activeTab', tab_href);
 
