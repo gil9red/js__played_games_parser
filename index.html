@@ -155,9 +155,10 @@
                             <table id="table_stats" class="table collapse">
                                 <tr><td>Игр:</td><td id="stats_total_games">-</td></tr>
                                 <tr><td>Платформ:</td><td id="stats_total_platforms">-</td></tr>
-                                <tr><td>Построение дерева (мс):</td><td id="elapsed_time_building">-</td></tr>
-                                <tr><td>Обновление вкладок (мс):</td><td id="elapsed_time_update_tabs">-</td></tr>
-                                <tr><td>Поиск (мс):</td><td id="elapsed_time_search">-</td></tr>
+                                <tr><td>Обновление вкладок (мс):</td><td id="stats_elapsed_time_update_tabs">-</td></tr>
+                                <tr><td>Построение дерева (мс):</td><td id="stats_elapsed_time_building">-</td></tr>
+                                <tr><td>Поиск (мс):</td><td id="stats_elapsed_time_search">-</td></tr>
+                                <tr style="display: none"><td>Найдено игр:</td><td id="stats_found_game">-</td></tr>
                             </table>
                         </div>
                         <div class="col-md-10">
@@ -350,7 +351,7 @@
                 onRendered: function(event, nodes) {
                     var timeDiff = new Date() - this.__startTime; // ms
                     console.log(`Elapsed time building: ${timeDiff} ms`);
-                    $('#elapsed_time_building').text(timeDiff);
+                    $('#stats_elapsed_time_building').text(timeDiff);
 
                     // NOTE: Fix error "Not initialized, can not call method : search"
                     setTimeout(search, 50);
@@ -382,18 +383,28 @@
                     }, 50);
                 },
                 onSearchComplete: function(event, results) {
+                    let number = 0;
+
                     $("#tree .node-tree.game").each( function(index) {
                         let nodeEl = $(this);
                         let nodeId = nodeEl.attr('data-nodeid');
                         let node = $('#tree').treeview("getNode", [ nodeId ]);
                         $('#tree').treeview("setVisible", [ node, node.searchResult ]);
+
+                        if (node.searchResult) {
+                            number++;
+                        }
                     });
 
                     updateGamesNumbers();
 
                     var timeDiff = new Date() - window.__startTimeSearch; // ms
                     console.log(`Elapsed time search: ${timeDiff} ms [onSearchComplete]`);
-                    $('#elapsed_time_search').text(timeDiff);
+                    $('#stats_elapsed_time_search').text(timeDiff);
+
+                    let stats_found_game = $('#stats_found_game');
+                    stats_found_game.parent().show();
+                    stats_found_game.text(number);
 
                     restoreNodesState();
                 },
@@ -411,7 +422,10 @@
 
                     var timeDiff = new Date() - window.__startTimeSearch; // ms
                     console.log(`Elapsed time search: ${timeDiff} ms [onSearchCleared]`);
-                    $('#elapsed_time_search').text("-");
+                    $('#stats_elapsed_time_search').text("-");
+
+                    let stats_found_game = $('#stats_found_game');
+                    stats_found_game.parent().hide();
                 },
             });
             $('#tree').on("click", function(event) {
@@ -433,7 +447,7 @@
 
             var timeDiff = new Date() - startTime; // ms
             console.log(`Elapsed time update_tabs: ${timeDiff} ms`);
-            $('#elapsed_time_update_tabs').text(timeDiff);
+            $('#stats_elapsed_time_update_tabs').text(timeDiff);
         }
 
         function process_text_file_gist(text) {
