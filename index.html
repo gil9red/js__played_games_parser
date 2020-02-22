@@ -219,11 +219,19 @@
                 visible = $("#switch_visible_table_stats").prop('checked');
             }
 
+            localStorage.switch_visible_table_stats = visible;
+
             let table = $('#table_stats');
             table.toggleClass('show', visible);
         }
 
         $(document).ready(function () {
+            // NOTE: On android Chrome not auto restore checked value after refresh page
+            if (localStorage.switch_visible_table_stats != null) {
+                let checked = localStorage.switch_visible_table_stats == "true";
+                $('#switch_visible_table_stats').bootstrapToggle(checked ? 'on' : 'off');
+            }
+
             on_change_visible_table_stats();
 
             $('#switch_visible_table_stats').change(function() {
