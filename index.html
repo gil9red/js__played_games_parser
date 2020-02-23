@@ -396,49 +396,59 @@
                     }, 50);
                 },
                 onSearchComplete: function(event, results) {
-                    let number = 0;
+                    try {
+                        let number = 0;
 
-                    $("#tree .node-tree.game").each( function(index) {
-                        let nodeEl = $(this);
-                        let nodeId = nodeEl.attr('data-nodeid');
-                        let node = $('#tree').treeview("getNode", [ nodeId ]);
-                        $('#tree').treeview("setVisible", [ node, node.searchResult ]);
+                        $("#tree .node-tree.game").each( function(index) {
+                            let nodeEl = $(this);
+                            let nodeId = nodeEl.attr('data-nodeid');
+                            let node = $('#tree').treeview("getNode", [ nodeId ]);
+                            $('#tree').treeview("setVisible", [ node, node.searchResult ]);
 
-                        if (node.searchResult) {
-                            number++;
-                        }
-                    });
+                            if (node.searchResult) {
+                                number++;
+                            }
+                        });
 
-                    updateGamesNumbers();
+                        updateGamesNumbers();
 
-                    var timeDiff = new Date() - window.__startTimeSearch; // ms
-                    console.log(`Elapsed time search: ${timeDiff} ms [onSearchComplete]`);
-                    $('#stats_elapsed_time_search').text(timeDiff);
+                        var timeDiff = new Date() - window.__startTimeSearch; // ms
+                        console.log(`Elapsed time search: ${timeDiff} ms [onSearchComplete]`);
+                        $('#stats_elapsed_time_search').text(timeDiff);
 
-                    let stats_found_game = $('#stats_found_game');
-                    stats_found_game.parent().show();
-                    stats_found_game.text(number);
+                        let stats_found_game = $('#stats_found_game');
+                        stats_found_game.parent().show();
+                        stats_found_game.text(number);
 
-                    restoreNodesState();
+                        restoreNodesState();
+
+                    } finally {
+                        setVisibleProgress(false);
+                    }
                 },
                 onSearchCleared: function(event, results) {
-                    $("#tree .node-tree.node-hidden").each( function(index) {
-                        let nodeEl = $(this);
-                        let nodeId = nodeEl.attr('data-nodeid');
-                        let node = $('#tree').treeview("getNode", [ nodeId ]);
-                        $('#tree').treeview("setVisible", [ node, true ]);
-                    });
+                    try {
+                        $("#tree .node-tree.node-hidden").each( function(index) {
+                            let nodeEl = $(this);
+                            let nodeId = nodeEl.attr('data-nodeid');
+                            let node = $('#tree').treeview("getNode", [ nodeId ]);
+                            $('#tree').treeview("setVisible", [ node, true ]);
+                        });
 
-                    updateGamesNumbers();
+                        updateGamesNumbers();
 
-                    restoreNodesState();
+                        restoreNodesState();
 
-                    var timeDiff = new Date() - window.__startTimeSearch; // ms
-                    console.log(`Elapsed time search: ${timeDiff} ms [onSearchCleared]`);
-                    $('#stats_elapsed_time_search').text("-");
+                        var timeDiff = new Date() - window.__startTimeSearch; // ms
+                        console.log(`Elapsed time search: ${timeDiff} ms [onSearchCleared]`);
+                        $('#stats_elapsed_time_search').text("-");
 
-                    let stats_found_game = $('#stats_found_game');
-                    stats_found_game.parent().hide();
+                        let stats_found_game = $('#stats_found_game');
+                        stats_found_game.parent().hide();
+
+                    } finally {
+                        setVisibleProgress(false);
+                    }
                 },
             });
             $('#tree').on("click", function(event) {
@@ -487,6 +497,8 @@
         }
 
         function search(e) {
+            setVisibleProgress(true);
+
             window.__startTimeSearch = new Date();
 
             let tree = $('#tree');
