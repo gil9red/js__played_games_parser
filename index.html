@@ -75,8 +75,8 @@
         <div class="row">
             <div class="col m-2">
                 <div class="progress" style="display: none">
-                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-                       aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 75%;">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated w-100" role="progressbar"
+                       aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
                     </div>
                 </div>
             </div>
@@ -250,17 +250,15 @@
             $('#result_raw').text("<error>");
             show_error(jqXHR + ", " + textStatus + ", " + errorThrown);
 
-            setProgress(0);
+            setVisibleProgress(false);
         }
 
         function refresh_parse() {
             $('#notify_need_refresh').hide();
 
-            setProgress(1);
+            setVisibleProgress(true);
 
             $.get(url_gist, response => {
-                setProgress(25);
-
                 let text = parse_gist_file(response);
                 if (text != null) {
                     console.log("Success parse gist content from " + url_gist);
@@ -455,7 +453,7 @@
                 $('#tree').treeview('toggleNodeExpanded', [ node, {is_user_click: true} ]);
             });
 
-            setProgress(100);
+            setVisibleProgress(false);
 
             let platforms = JSON.parse(result_json);
             updateStatistics(platforms);
@@ -466,19 +464,15 @@
         }
 
         function process_text_file_gist(text) {
-            setProgress(50);
-
             localStorage.cache_text_file_gist = text;
 
             let platforms = parse_played_games(text);
             let result_json = stringifyMap(platforms);
             localStorage.cache_result_json = result_json;
-            setProgress(75);
 
             let tree_data = getJsonForTreeView(platforms);
             let tree_raw = JSON.stringify(tree_data, null, 4);
             localStorage.cache_tree_raw = tree_raw;
-            setProgress(90);
 
             update_tabs(
                 text,
@@ -488,23 +482,8 @@
             );
         }
 
-        function setProgress(value) {
-            let progressBar = $("#progressBar");
-
-            if (value > 100) {
-                value = 100;
-            }
-            if (value < 0) {
-                value = 0;
-            }
-
-            progressBar
-                .css({"width": value + "%"})
-                .attr("aria-valuenow", value);
-
-            progressBar.parent().toggle(
-                !(value == 100 || value == 0)
-            );
+        function setVisibleProgress(visible) {
+            $("#progressBar").parent().toggle(visible);
         }
 
         function search(e) {
