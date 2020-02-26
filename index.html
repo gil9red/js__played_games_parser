@@ -397,11 +397,11 @@
         }
 
         function startTimer(timerName) {
-            window["__" + timerName] = new Date();
+            window["@" + timerName] = new Date();
         }
 
         function finishTimer(timerName, onTimeDiffFunc, postText="") {
-            let startTime = window["__" + timerName];
+            let startTime = window["@" + timerName];
             let timeDiff = new Date() - startTime; // ms
             console.log(`Elapsed time "${timerName}": ${timeDiff} ms` + postText);
 
