@@ -163,10 +163,9 @@
                             <table id="table_stats" class="table collapse">
                                 <tr><td>Игр:</td><td id="stats_total_games">-</td></tr>
                                 <tr><td>Платформ:</td><td id="stats_total_platforms">-</td></tr>
-                                <tr><td>Обновление вкладок (мс):</td><td id="stats_elapsed_time_update_tabs">-</td></tr>
-                                <tr><td>Построение дерева (мс):</td><td id="stats_elapsed_time_building">-</td></tr>
                                 <tr><td>Поиск (мс):</td><td id="stats_elapsed_time_search">-</td></tr>
                                 <tr style="display: none"><td>Найдено игр:</td><td id="stats_found_game">-</td></tr>
+                                <tr><th scope="row" colspan="2">Timers:</th></tr>
                             </table>
                         </div>
                         <div class="col-md-10">
@@ -398,12 +397,22 @@
 
         function startTimer(timerName) {
             window["@" + timerName] = new Date();
+
+            let timerNameId = timerName.replace(/\W/g, '_');
+            let timerValueEl = $('#' + timerNameId);
+            if (timerValueEl.length == 0) {
+                $('#table_stats').append(`<tr><td>${timerName} (мс)</td><td id="${timerNameId}"></td></tr>`);
+            }
         }
 
         function finishTimer(timerName, onTimeDiffFunc, postText="") {
             let startTime = window["@" + timerName];
             let timeDiff = new Date() - startTime; // ms
             console.log(`Elapsed time "${timerName}": ${timeDiff} ms` + postText);
+
+            let timerNameId = timerName.replace(/\W/g, '_');
+            let timerValueEl = $('#' + timerNameId);
+            timerValueEl.text(timeDiff);
 
             if (onTimeDiffFunc != null) {
                 onTimeDiffFunc(timeDiff);
@@ -475,7 +484,7 @@
                     startTimer("update_tab_tree_data");
                 },
                 onRendered: function(event, nodes) {
-                    finishTimer("update_tab_tree_data", timeDiff => $('#stats_elapsed_time_building').text(timeDiff));
+                    finishTimer("update_tab_tree_data");
                     onRendered(event, nodes);
                 },
                 onSearchComplete: onSearchComplete,
@@ -506,7 +515,7 @@
 
             updateStatistics(result_json);
 
-            finishTimer("update_tabs", timeDiff => $('#stats_elapsed_time_update_tabs').text(timeDiff));
+            finishTimer("update_tabs");
         }
 
         function process_text_file_gist(text) {
@@ -568,7 +577,7 @@
         }
 
         function updateStatistics(platforms) {
-            startTimer("updateStatistics");
+            startTimer("update statistics");
 
             if (typeof platforms === 'string') {
                 platforms = JSON.parse(platforms);
@@ -588,7 +597,7 @@
             $('#stats_total_games').text(total_games);
             $('#stats_total_platforms').text(total_platforms);
 
-            finishTimer("updateStatistics");
+            finishTimer("update statistics");
         }
 
         function updateGamesNumbers() {
