@@ -119,14 +119,14 @@
 
         <nav class="mt-2">
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <a class="nav-item nav-link active" id="nav-raw_text-tab" data-toggle="tab" href="#nav-raw_text" role="tab" aria-controls="nav-raw_text" aria-selected="true">RAW text</a>
+                <a class="nav-item nav-link" id="nav-raw_text-tab" data-toggle="tab" href="#nav-raw_text" role="tab" aria-controls="nav-raw_text" aria-selected="true">RAW text</a>
                 <a class="nav-item nav-link" id="nav-as_json-tab" data-toggle="tab" href="#nav-as_json" role="tab" aria-controls="nav-as_json" aria-selected="false">Parsed as JSON</a>
-                <a class="nav-item nav-link" id="nav-as_tree-tab" data-toggle="tab" href="#nav-as_tree" role="tab" aria-controls="nav-as_tree" aria-selected="false">Parser as Tree</a>
+                <a class="nav-item nav-link active" id="nav-as_tree-tab" data-toggle="tab" href="#nav-as_tree" role="tab" aria-controls="nav-as_tree" aria-selected="false">Parser as Tree</a>
                 <a class="nav-item nav-link" id="nav-as_tree_raw-tab" data-toggle="tab" href="#nav-as_tree_raw" role="tab" aria-controls="nav-as_tree_raw" aria-selected="false">Parser as Tree (RAW)</a>
             </div>
         </nav>
         <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-raw_text" role="tabpanel" aria-labelledby="nav-raw_text-tab">
+            <div class="tab-pane fade" id="nav-raw_text" role="tabpanel" aria-labelledby="nav-raw_text-tab">
                 <textarea readonly="readonly" id="result_raw" cols="100" rows="10"></textarea>
             </div>
             <div class="tab-pane fade" id="nav-as_json" role="tabpanel" aria-labelledby="nav-as_json-tab">
@@ -147,7 +147,7 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="nav-as_tree" role="tabpanel" aria-labelledby="nav-as_tree-tab">
+            <div class="tab-pane fade show active" id="nav-as_tree" role="tabpanel" aria-labelledby="nav-as_tree-tab">
                 <div class="container-fluid ml-0 mr-0 pl-0 pr-0">
                     <div class="row flex-row-reverse">
                         <div class="col-md-2 w-100">
@@ -155,7 +155,7 @@
                                 <input
                                         id="switch_visible_table_stats"
                                         type="checkbox"
-                                        data-toggle="toggle" data-width="100%"
+                                        data-toggle="toggle" data-width="100%" data-height="30"
                                         data-on="Statistics Table" data-off="Statistics Table"
                                         data-onstyle="primary" data-offstyle="secondary"
                                 >
@@ -683,11 +683,11 @@
             //
             // Значение href вкладки в URI является приоритетным. Если оно не задано, то берем из localStorage
             if (location.hash) {
-                $("a[href='" + location.hash + "']").tab("show");
+                $(`a[href="${location.hash}"]`).tab("show");
             } else {
                 var activeTab = localStorage.getItem('activeTab');
                 if (activeTab) {
-                    $('#nav-tab a[href="' + activeTab + '"]').tab('show');
+                    $(`#nav-tab a[href="${activeTab}"]`).tab('show');
                 }
             }
 
