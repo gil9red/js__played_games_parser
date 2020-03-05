@@ -401,7 +401,7 @@
             let timerNameId = timerName.replace(/\W/g, '_');
             let timerValueEl = $('#' + timerNameId);
             if (timerValueEl.length == 0) {
-                $('#table_stats').append(`<tr><td>${timerName} (мс)</td><td id="${timerNameId}"></td></tr>`);
+                $('#table_stats').append(`<tr><td>${timerName} (мс):</td><td id="${timerNameId}"></td></tr>`);
             }
         }
 
