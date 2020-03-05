@@ -503,22 +503,78 @@
             });
         }
 
-        function update_tabs(result_raw, result_json, tree_data, tree_raw) {
-            startTimer("update_tabs");
+        function initActiveTab(activeTab=null, result_raw=null, result_json=null, tree_data=null, tree_raw=null) {
+            if (activeTab == null) {
+                activeTab = $('#nav-tab > a.active');
+            }
 
-            update_tab_result_raw(result_raw);
-            update_tab_result_json(result_json);
-            update_tab_tree_data(tree_data);
-            update_tab_tree_raw(tree_raw);
+            let contentState = activeTab.attr("data-content-state");
+            if (contentState == "initialization" || contentState == "ready") {
+                return;
+            }
 
+            setVisibleProgress(true);
+
+            if (result_raw == null) {
+                result_raw = localStorage.cache_text_file_gist;
+            }
+            if (result_json == null) {
+                result_json = localStorage.cache_result_json;
+            }
+            if (tree_data == null) {
+                // Можно и не парсить (JSON.parse), дерево в update_tab_tree_data может и строку принять
+                tree_data = localStorage.cache_tree_raw;
+            }
+            if (tree_raw == null) {
+                tree_raw = localStorage.cache_tree_raw;
+            }
+
+            let tabContentId = activeTab.attr('href');
+
+            activeTab.attr("data-content-state", "initialization");
+
+            switch (tabContentId) {
+                case "#nav-raw_text": {
+                    update_tab_result_raw(result_raw);
+                    break;
+                }
+
+                case "#nav-as_json": {
+                    update_tab_result_json(result_json);
+                    break;
+                }
+
+                case "#nav-as_tree": {
+                    update_tab_tree_data(tree_data);
+                    break;
+                }
+
+                case "#nav-as_tree_raw": {
+                    update_tab_tree_raw(tree_raw);
+                    break;
+                }
+
+                default: {
+                    console.log("[-]", "Unsupported tab: " + tabContentId);
+                }
+            }
+
+            activeTab.attr("data-content-state", "ready");
             setVisibleProgress(false);
+        }
+
+        function update_tabs(result_raw=null, result_json=null, tree_data=null, tree_raw=null) {
+            setVisibleProgress(true);
 
             updateStatistics(result_json);
+            initActiveTab(null, result_raw, result_json, tree_data, tree_raw);
 
-            finishTimer("update_tabs");
+            setVisibleProgress(false);
         }
 
         function process_text_file_gist(text) {
+            setVisibleProgress(true);
+
             localStorage.cache_text_file_gist = text;
 
             startTimer("cache_result_json");
@@ -576,8 +632,12 @@
             }]);
         }
 
-        function updateStatistics(platforms) {
+        function updateStatistics(platforms=null) {
             startTimer("update statistics");
+
+            if (platforms == null) {
+                platforms = localStorage.cache_result_json;
+            }
 
             if (typeof platforms === 'string') {
                 platforms = JSON.parse(platforms);
@@ -651,6 +711,12 @@
         }
 
         $(document).ready(function() {
+            $('#nav-tab > a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                initActiveTab($(this));
+            });
+        });
+
+        $(document).ready(function() {
             var typingTimer = null;       // Timer identifier
             var doneTypingInterval = 300; // Time in ms
 
@@ -716,12 +782,7 @@
             if (localStorage.cache_text_file_gist != null) {
                 console.log("Build from cache");
 
-                update_tabs(
-                    localStorage.cache_text_file_gist,
-                    localStorage.cache_result_json,
-                    localStorage.cache_tree_raw,
-                    JSON.parse(localStorage.cache_tree_raw)
-                );
+                update_tabs();
 
                 // Проверяем актуальность кэша
                 check_actuality_of_cache();
