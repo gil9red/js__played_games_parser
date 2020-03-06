@@ -244,27 +244,33 @@
             $('#msg_error_text').text(text);
         }
 
-        function process_error(jqXHR, textStatus, errorThrown) {
-            console.log("error: " + jqXHR + ", " + textStatus + ", " + errorThrown);
-            $('#result_raw').text("<error>");
-            show_error(jqXHR + ", " + textStatus + ", " + errorThrown);
+        function get_url_gist(on_response_func) {
+            startTimer("get url_gist");
+            setVisibleProgress(true);
 
-            setVisibleProgress(false);
+            $.get(url_gist, on_response_func)
+                .fail((jqXHR, textStatus, errorThrown) => {
+                    console.log("error: " + jqXHR + ", " + textStatus + ", " + errorThrown);
+                    $('#result_raw').text("<error>");
+                    show_error(jqXHR + ", " + textStatus + ", " + errorThrown);
+                })
+                .always(() => {
+                    setVisibleProgress(false);
+                    finishTimer("get url_gist");
+                })
+            ;
         }
 
         function refresh_parse() {
             $('#notify_need_refresh').hide();
 
-            setVisibleProgress(true);
-
-            $.get(url_gist, response => {
+            get_url_gist(response => {
                 let text = parse_gist_file(response);
                 if (text != null) {
                     console.log("Success parse gist content from " + url_gist);
                     process_text_file_gist(text);
                 }
-
-            }).fail(process_error);
+            });
         }
 
         function check_actuality_of_cache() {
@@ -276,7 +282,7 @@
                 return;
             }
 
-            $.get(url_gist, response => {
+            get_url_gist(response => {
                 let is_actual_cache = parse_gist_file(response) == localStorage.cache_text_file_gist;
 
                 // Если кэш актуален
