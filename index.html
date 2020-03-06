@@ -263,6 +263,7 @@
 
         function refresh_parse() {
             $('#notify_need_refresh').hide();
+            $('[data-content-state]').removeAttr('data-content-state');
 
             get_url_gist(response => {
                 let text = parse_gist_file(response);
