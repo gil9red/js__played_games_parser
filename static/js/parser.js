@@ -168,7 +168,7 @@ function parse_played_games(text) {
         const category = platform.get(category_name);
         const game_name = line.substring(2);
 
-        for (game of parse_game_name(game_name)) {
+        for (let game of parse_game_name(game_name)) {
             if (category.includes(game)) {
                 continue
             }
