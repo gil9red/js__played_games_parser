@@ -275,6 +275,7 @@
         }
 
         function check_actuality_of_cache() {
+            startTimer("check_actuality_of_cache");
             console.log("Check actuality of cache");
 
             // Если кэша нет
@@ -284,7 +285,16 @@
             }
 
             get_url_gist(response => {
-                let is_actual_cache = parse_gist_file(response) == localStorage.cache_text_file_gist;
+                startTimer("is_actual_cache");
+                let cache_text_file_gist = localStorage.cache_text_file_gist;
+                let text_file_gist = parse_gist_file(response);
+
+                let is_actual_cache = deep_compare(
+                    parse_played_games(text_file_gist),
+                    parse_played_games(cache_text_file_gist)
+                );
+
+                finishTimer("is_actual_cache");
 
                 // Если кэш актуален
                 if (is_actual_cache) {
@@ -295,6 +305,8 @@
                     console.log("Cache is not actual!");
                     $('#notify_need_refresh').show();
                 }
+
+                finishTimer("check_actuality_of_cache");
             });
         }
 

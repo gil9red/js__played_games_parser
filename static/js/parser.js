@@ -100,6 +100,9 @@ function parse_game_name(game_name) {
 
 /**
  * Функция для парсинга файлов в gist.github.com
+ *
+ * @param {string} html_text
+ * @return {string}
  */
 function parse_gist_file(html_text) {
     function _process(node) {
@@ -131,6 +134,9 @@ function parse_gist_file(html_text) {
 
 /**
  * Функция для парсинга списка игр.
+ *
+ * @param {string} text
+ * @return {Map} platforms
  */
 function parse_played_games(text) {
     let platforms = new Map();
@@ -241,4 +247,52 @@ function getJsonForTreeView(platforms) {
         data.push(platform);
     }
     return data;
+}
+
+
+function deep_compare(a, b) {
+	if (typeof a !== typeof b) {
+		return false;
+    }
+
+	if (typeof a !== 'object') {
+		return a === b;
+	}
+
+	if (Object.keys(a).length != Object.keys(b).length) {
+		return false;
+    }
+
+	if (Array.isArray(a) && Array.isArray(b)) {
+		a.sort();
+		b.sort();
+	}
+
+    if (a instanceof Map && b instanceof Map) {
+        if (a.size != b.size) {
+            return false;
+        }
+
+        for (let k of a.keys()) {
+            if (!b.has(k)) {
+                return false;
+            }
+
+            if (!deep_compare(a.get(k), b.get(k))) {
+                return false;
+            }
+        }
+    }
+
+	for (let k in a) {
+		if (!(k in b)) {
+			return false;
+        }
+
+		if (!deep_compare(a[k], b[k])) {
+			return false;
+		}
+	}
+
+	return true;
 }
