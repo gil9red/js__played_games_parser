@@ -240,6 +240,8 @@
         });
 
         function show_error(text) {
+            console.log('[-]', text);
+
             $('#msg_error').show();
             $('#msg_error_text').text(text);
         }
@@ -250,9 +252,10 @@
 
             $.get(url_gist, on_response_func)
                 .fail((jqXHR, textStatus, errorThrown) => {
-                    console.log("error: " + jqXHR + ", " + textStatus + ", " + errorThrown);
                     $('#result_raw').text("<error>");
-                    show_error(jqXHR + ", " + textStatus + ", " + errorThrown);
+
+                    let text = "Error: " + jqXHR.responseText + ", " + textStatus + ", " + errorThrown;
+                    show_error(text);
                 })
                 .always(() => {
                     setVisibleProgress(false);
