@@ -168,7 +168,10 @@
                                 >
                             </div>
                             <table id="table_stats" class="table collapse">
-                                <tr><td>Игр:</td><td id="stats_total_games">-</td></tr>
+                                <tr><td>Всего:</td><td id="stats_total">-</td></tr>
+                                <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Игр:</td><td id="stats_total_games">-</td></tr>
+                                <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;DLC:</td><td id="stats_total_DLC">-</td></tr>
+                                <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Другое:</td><td id="stats_total_other">-</td></tr>
                                 <tr><td>Платформ:</td><td id="stats_total_platforms">-</td></tr>
                                 <tr><td>Поиск (мс):</td><td id="stats_elapsed_time_search">-</td></tr>
                                 <tr style="display: none"><td>Найдено игр:</td><td id="stats_found_game">-</td></tr>
@@ -672,7 +675,9 @@
                 platforms = JSON.parse(platforms);
             }
 
-            let total_games = 0;
+            let total_games     = 0;
+            let total_dlc       = 0;
+            let total_other     = 0;
             let total_platforms = 0;
 
             for (let [platform_name, categories] of Object.entries(platforms)) {
@@ -680,10 +685,27 @@
 
                 for (let [category_name, games] of Object.entries(categories)) {
                     total_games += games.length;
+
+                    for (let game of games) {
+                        // Example: Dishonored: The Knife of Dunwall (DLC)
+                        m = game.match(/\(([a-z]+)\)/i);
+                        if (m == null) {
+                            continue;
+                        }
+                        if (m[1] == 'DLC') {
+                            total_dlc += 1;
+                        }
+                        if (['DEMO', 'Beta', 'MOD'].includes(m[1])) {
+                            total_other += 1;
+                        }
+                    }
                 }
             }
 
-            $('#stats_total_games').text(total_games);
+            $('#stats_total').text(total_games);
+            $('#stats_total_games').text(total_games - total_dlc - total_other);
+            $('#stats_total_DLC').text(total_dlc);
+            $('#stats_total_other').text(total_other);
             $('#stats_total_platforms').text(total_platforms);
 
             finishTimer("update statistics");
