@@ -18,6 +18,9 @@
     <script src="static/js/parser.js"></script>
     <script src="static/jquery.jsonview/jquery.jsonview.js"></script>
 
+    <!-- noty -->
+    <script src="static/js/jquery.noty.packaged.min.js"></script>
+
     <style>
         pre.code-json, textarea {
             overflow: scroll;
@@ -352,6 +355,11 @@
             setTimeout(() => {
                 let nodes = $('#tree').treeview("getNodes");
                 $.each(nodes, function(index, node) {
+                    // Need only game
+                    if (node.nodes != undefined) {
+                        continue;
+                    }
+
                     node.$el
                         .attr('data-toggle', 'tooltip')
                         .attr('data-original-title', node.text)
@@ -359,6 +367,7 @@
 
                     var longPressTimer = null;
 
+                    // Show text after long press
                     node.$el.on('mousedown touchstart', function(event) {
                         longPressTimer = setTimeout(() => {
                             // Show tooltip
@@ -366,9 +375,26 @@
                             setTimeout(() => node.$el.tooltip('hide'), 1000);
 
                         }, 2000);
-
                     }).on('mouseup mouseleave touchend', function() {
                         clearTimeout(longPressTimer);
+                    });
+
+                    // Copy text by double click
+                    node.$el.dblclick(function() {
+                        // SOURCE: https://stackoverflow.com/a/48948114/5909792
+                        $("<textarea/>")
+                            .appendTo("body")
+                            .val(node.text)
+                            .select()
+                            .each(() => document.execCommand('copy'))
+                            .remove();
+
+                        noty({
+                            text: 'Скопировано в буфер обмена',
+                            type: 'success',
+                            layout: 'bottomCenter',
+                            timeout: 2000,
+                        });
                     });
                 });
             }, 50);
