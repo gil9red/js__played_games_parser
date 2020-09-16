@@ -357,7 +357,7 @@
                 $.each(nodes, function(index, node) {
                     // Need only game
                     if (node.nodes != undefined) {
-                        continue;
+                        return;
                     }
 
                     node.$el
