@@ -86,21 +86,18 @@
             z-index: 1000;
             background: rgba(100, 100, 100, .5);
         }
-
-        .progress-lg {
-            height: 5rem !important;
+        #glass .spinner-border {
+            width: 30rem;
+            height: 30rem;
         }
     </style>
 </head>
 <body>
     <div id="glass" class="container-fluid" style="display: none">
         <div class="row align-items-center h-100">
-            <div class="col">
-                <div class="progress progress-lg">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated w-100"
-                         role="progressbar"
-                         aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-                    </div>
+            <div class="col d-flex justify-content-center">
+                <div class="spinner-border text-primary" style="margin: auto;" role="status">
+                    <span class="sr-only">Loading...</span>
                 </div>
             </div>
         </div>
