@@ -246,6 +246,11 @@
     <script>
         var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+        // Довольно длительная загрузка на мобильном
+        if (isMobile) {
+            setVisibleProgress(true);
+        }
+
         // Для обхода: "Запрос из постороннего источника заблокирован: Политика одного источника запрещает чтение удаленного ресурса"
         $.ajaxPrefilter(options => {
             if (options.crossDomain && jQuery.support.cors) {
