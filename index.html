@@ -261,6 +261,7 @@
                     options.beforeSend = function(xhr) {
                         xhr.setRequestHeader('Origin', 'bridged.xyz');
                         xhr.setRequestHeader('x-requested-with', 'XMLHttpRequest');
+                        xhr.setRequestHeader('x-cors-grida-api-key', 'fafb0676-acb6-4e8b-919d-2355d5091162');
                     }
                 }
             }
