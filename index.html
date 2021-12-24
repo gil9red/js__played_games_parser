@@ -255,7 +255,7 @@
         // Для обхода: "Запрос из постороннего источника заблокирован: Политика одного источника запрещает чтение удаленного ресурса"
         $.ajaxPrefilter(options => {
             if (options.crossDomain && jQuery.support.cors) {
-                options.url = "http://79.134.10.174:10008/" + options.url;
+                options.url = "https://79.134.10.174:10008/" + options.url;
 
                 if (!options.beforeSend) {
                     options.beforeSend = function(xhr) {
